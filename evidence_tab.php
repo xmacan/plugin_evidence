@@ -145,27 +145,14 @@ function evidence_display_form() {
 	print '<input type="text" name="find_text" id="find" value="' . get_request_var('find_text') . '">';
 	print '</td>';
 	print '<td>';
-	print __('Specify data type');
+	print 'You can search serial number, firmware version, ip, mac address,...';
 	print '</td>';
-	print '<td>';
 
-	print '<select id="datatype" name="datatype">';
-	print '<option value="all" '    . (get_request_var('datatype') == 'all'  ? 'selected="selected"' : '') . '>' . __('All', 'evidence') . '</option>';
-	print '<option value="mac" '  . (get_request_var('datatype') == 'mac'  ? 'selected="selected"' : '') . '>' . __('Mac addresses', 'evidence') . '</option>';
-	print '<option value="ip"  '  . (get_request_var('datatype') == 'ip'   ? 'selected="selected"' : '') . '>' . __('IP addresses', 'evidence') . '</option>';
-	print '<option value="spec" ' . (get_request_var('datatype') == 'spec' ? 'selected="selected"' : '') . '>' . __('Vendor specific', 'evidence') . '</option>';
-	print '<option value="opt" '  . (get_request_var('datatype') == 'opt'  ? 'selected="selected"' : '') . '>' . __('Vendor optional', 'evidence') . '</option>';
-
-	foreach ($entities as $key => $value) {
-		print '<option value="' . $key . '" ' . (get_request_var('datatype') == $key ? 'selected="selected"' : '') . '>Entity - ' . $value . '</option>';
-	}
-
-	print '</select>';
-	print '</form>';
-
-	print '</td>';
 	print '</tr>';
 	print '</table>';
+
+	print '</form>';
+
 	html_end_box();
 }
 
@@ -189,13 +176,7 @@ function evidence_find() {
 		$template_id = get_filter_request_var('template_id');
 	}
 
-	if (array_key_exists(get_request_var('datatype'), $entities) || array_key_exists(get_request_var('datatype'), $datatypes) || get_request_var('datatype') == 'all') {
-		$datatype = get_request_var('datatype');
-	} else {
-		$datatype = null;
-	}
-
-	$find_text = get_filter_request_var ('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:]+)$/')));
+	$find_text = get_filter_request_var ('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+]+)$/')));
 	if (empty($find_text)) {
 		unset($find_text);
 	}
@@ -206,22 +187,30 @@ function evidence_find() {
 	}
 
 	if (isset($host_id)) {
-		evidence_show_host_data($host_id, $datatype, $scan_date);
+		evidence_show_checkboxes();
+		evidence_show_host_data($host_id, $scan_date);
 	} else if (isset($template_id)) {
 		$hosts = db_fetch_assoc_prepared('SELECT id FROM host
 			WHERE host_template_id = ?',
 			array($template_id));
-	
-		foreach ($hosts as $host) {
-			evidence_show_host_data($host['id'], $datatype, $scan_date);
+
+		if (cacti_sizeof($hosts) > 0) {
+			evidence_show_checkboxes();
+
+			foreach ($hosts as $host) {
+				evidence_show_host_data($host['id'], $scan_date);
+			}
 		}
+	}
+
+	if (isset($find_text)) {
+		plugin_evidence_find();
 	}
 
 	if (!isset($host_id) && !isset($template_id)) {
 		print __('Select any device or template', 'snver');
 	}
 }
-
 
 function evidence_stats() {
 	global $config;
@@ -260,4 +249,31 @@ function evidence_stats() {
 	print 'Oldest record: ' . $old . '<br/>';
 }
 
+function evidence_show_checkboxes() {
+	print "<table class='filterTable'>";
+	print '<tr>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_expand" name="ch_expand" value="1"><label for="ch_expand" class="bold">Expand all dates</label>';
+	print '</td>';
+	print '<td>';
+	print '</td>';
 
+	print '<td>' . __('Show or hide', 'evidence') . ':</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_entity" name="ch_entity" value="1" checked="checked"><label for="ch_entity">Entity MIB</label>';
+	print '</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_mac" name="ch_mac" value="1" checked="checked"><label for="ch_mac">MAC address</label>';
+	print '</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_ip" name="ch_ip" value="1" checked="checked"><label for="ch_ip">IP adress</label>';
+	print '</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_specific" name="ch_vendor" value="1" checked="checked"><label for="ch_specific">Vendor spec.</label>';
+	print '</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_optional" name="ch_optional" value="1" checked="checked"><label for="ch_optional">Vendor opt.</label>';
+	print '</td>';
+	print '</tr>';
+	print '</table>';
+}

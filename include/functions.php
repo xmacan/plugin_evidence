@@ -697,13 +697,13 @@ function plugin_evidence_find() {
 		WHERE ' . $sql_where . ' GROUP BY host_id');
 
 
-	print '<br/><b>Entity MIB:</b><br/>';
+	print '<br/><span class="bold">Entity MIB:</span><br/>';
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] .
-				'plugins/evidence/evidence_tab.php?action=find&datatype=all&host_id=' . $row['host_id'] . '">' .
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
 				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . $row['count'] . ' records<br/>';
 		}
 	} else {
@@ -713,26 +713,26 @@ function plugin_evidence_find() {
 	$data = db_fetch_assoc_prepared ("SELECT host_id, COUNT(scan_date) AS `count` FROM plugin_evidence_mac
 		WHERE mac RLIKE '" . $f . "' GROUP BY host_id");
 
-	print '<br/><b>MAC addresses:</b><br/>';
+	print '<br/><span class="bold">MAC addresses:</span><br/>';
 
 	if (cacti_sizeof($data)) {
 
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&datatype=all&host_id=' . $row['host_id'] . '">' .
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
 				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . $row['count'] . ' records<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
 	}
 
-	print '<br/><b>IP addresses:</b><br/>';
+	print '<br/><span class="bold">IP addresses:</span><br/>';
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&datatype=all&host_id=' . $row['host_id'] . '">' .
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
 				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . $row['count'] . ' records<br/>';
 		}
 	} else {
@@ -747,13 +747,13 @@ function plugin_evidence_find() {
 	$data = db_fetch_assoc ('SELECT host_id, COUNT(scan_date) AS `count` FROM plugin_evidence_vendor_specific
 		WHERE ' . $sql_where . ' GROUP BY host_id');
 
-	print '<br/><b>Vendor specific data:</b><br/>';
+	print '<br/><span class="bold">Vendor specific data:</span><br/>';
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&datatype=all&host_id=' . $row['host_id'] . '">' .
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
 				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . $row['count'] . ' records<br/>';
 		}
 	} else {
@@ -840,38 +840,35 @@ function plugin_evidence_time_to_run() {
 	$baselower = $basetime - 300;
 	$now       = time();
 
-//	cacti_log("LastRun:'$lastrun', Frequency:'$frequency' sec, BaseTime:'" . date('Y-m-d H:i:s', $basetime) . "', BaseUpper:'$baseupper', BaseLower:'$baselower', Now:'" . date('Y-m-d H:i:s', $now) . "'", false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 	cacti_log("LastRun:'$lastrun', Frequency:'$frequency' sec, BaseTime:'" . date('Y-m-d H:i:s', $basetime) . "', BaseUpper:'$baseupper', BaseLower:'$baselower', Now:'" . date('Y-m-d H:i:s', $now) . "'", false, 'EVIDENCE');
 
 	if ($frequency > 0 && ($now - $lastrun > $frequency)) {
 		if (empty($lastrun) && ($now < $baseupper) && ($now > $baselower)) {
 
-//			cacti_log('Time to first run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
-			cacti_log('Time to first run', false, 'EVIDENCE');
+			cacti_log('Time to first run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 			set_config_option('plugin_evidence_lastrun', time());
 
 			return true;
 		} elseif (($now - $lastrun > $frequency) && ($now < $baseupper) && ($now > $baselower)) {
-//			cacti_log('Time to periodic Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
-			cacti_log('Time to periodic Run', false, 'EVIDENCE');
+			cacti_log('Time to periodic Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 			set_config_option('plugin_evidence_lastrun', time());
 
 			return true;
 		} else {
-//			cacti_log('Not Time to Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
-	cacti_log('Not Time to Run', false, 'EVIDENCE');
+			cacti_log('Not Time to Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 
 			return false;
 		}
 	} else {
-//		cacti_log('Not time to Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
-		cacti_log('Not time to Run', false, 'EVIDENCE');
+		cacti_log('Not time to Run', false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 
 		return false;
 	}
 }
 
-function evidence_show_host_data ($host_id, $datatype, $scan_date) {
+// show data in evidence tab
+
+function evidence_show_host_data ($host_id, $scan_date) {
 	global $config, $entities, $datatypes;
 
 	$evidence_records   = read_config_option('evidence_records');
@@ -887,17 +884,15 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 		ON host.host_template_id = host_template.id
 		WHERE host.id = ?',
 		array($host_id));
-		
-	print '<h3>' . $host['description'] . ' (' . $host['hostname'] . ', ' . $host['template_name'] . ')</h3>';
 
-	print '<dl>';
+	print '<h3>' . $host['description'] . ' (' . $host['hostname'] . ', ' . $host['template_name'] . ')</h3>';
 
 	if (!get_filter_request_var('actual')) {
 		print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' .
-		$host_id . '&template=&actual=1&action=find&datatype=' . $datatype . '">' . __('Show actual', 'evidence') . '</a>';
+		$host_id . '&template=&actual=1&action=find">' . __('Also show actual data', 'evidence') . '</a>';
 		print '<br/><br/>';
-	} else {	// show actual data
-		unset_request_var('actual');
+	} else {  // show actual data
+
 		$data = plugin_evidence_actual_data($host);
 
 		if (isset($data['org_name'])) {
@@ -908,111 +903,52 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 			print ' (ID ORG: ' . $data['org_id'] . ')' . '<br/>';
 		}
 
-		if ((array_key_exists($datatype, $entities) && isset($data['entity'])) || $datatype == 'all') {
+		// prepare actual data
+		$act_date = date('Y-m-d H:i:s');
 
-			print '<br/><b>Entity MIB:</b><br/>';
-			print '<table class="cactiTable"><tr>';
-
-			foreach ($data['entity'] as $row) {
-				print '<td>';
-				foreach ($row as $key => $value) {
-
-					if ($datatype == 'all') { 
-						print $key . ': ' . $value . '<br/>';
-					} else if ($key == $datatype) {
-						print $key . ': ' . $value . '<br/>';
-					}
-				}
-				print '</td>';
-			}
-			print '</tr></table>';
-			$data_compare_entity = $data['entity'];
+		if (isset($data['entity'])) {
+			$act_data['entity'][$act_date] = $data['entity'];
 		}
-
-		if (($datatype == 'all' || $datatype == 'mac') && isset($data['mac'])) {
-			$count = 0;
-			print '<br/><b>MAC:</b><br/>';
-			print '<table class="cactiTable"><tr>';
-
-			foreach ($data['mac'] as $mac) {
-				print '<td>' . $mac . '</td>';
-				$count++;
-				if ($count > 5) {
-					$count = 0;
-					print '</tr><tr>';
-				}
-			}
-			print '</tr></table>';
-			$data_compare_mac = $data['mac'];
+		if (isset($data['mac'])) {
+			$act_data['mac'][$act_date] = $data['mac'];
 		}
-
-		if (($datatype == 'all' || $datatype == 'ip') && isset($data['ip'])) {
-			$count = 0;
-			print '<br/><b>IP:</b><br/>';
-			print '<table class="cactiTable"><tr>';
-
-			foreach ($data['ip'] as $ip) {
-				print '<td>' . $ip . '</td>';
-				$count++;
-				if ($count > 5) {
-					$count = 0;
-					print '</tr><tr>';
-				}
-			}
-			print '</tr></table>';
-			$data_compare_ip = $data['ip'];
+		if (isset($data['ip'])) {
+			$act_data['ip'][$act_date] = $data['ip'];
 		}
-
-		if (($datatype == 'all' || $datatype == 'spec') && isset($data['spec'])) {
-
-			print '<br/><b>Vendor specific:</b><br/>';
-
-			foreach ($data['spec'] as $row) {
-				if (!is_array($row['value'])) {
-					print $row['description'] . ': ' . $row['value'] . display_tooltip('OID: ' . $row['oid']) . '</br>';
-				} else {
-					print $row['description'] . display_tooltip('OID: ' . $row['oid']) . ':</br>';
-					foreach ($row['value'] as $a) {
-						if (is_array($a)) {
-							print implode(', ', $a);
-						} else {
-							print $a . '</br>';
-						}
-					}
-					print '</br>';
-				}
-			}
-			$data_compare_spec = $data['spec'];
+		if (isset($data['spec'])) {
+			$act_data['spec'][$act_date] = $data['spec'];
 		}
-
-		if (($datatype == 'all' || $datatype == 'opt') && isset($data['opt'])) {
-			$count = 0;
-			print '<br/><b>Vendor optional:</b><br/>';
-
-			foreach ($data['opt'] as $row) {
-				if (!is_array($row['value'])) {
-					print $row['description'] . ': ' . $row['value'] . display_tooltip('OID: ' . $row['oid']) . '</br>';
-				} else {
-					print $row['description'] . display_tooltip('OID: ' . $row['oid']) . ':</br>';
-					foreach ($row['value'] as $a) {
-						if (is_array($a)) {
-							print implode(', ', $a);
-						} else {
-							print $a . '</br>';
-						}
-					}
-					print '</br>';
-				}
-			}
+		if (isset($data['opt'])) {
+			$act_data['opt'][$act_date] = $data['opt'];
 		}
 	}
 
-	print '</dt>';
-	print '</dd><br/><br/>';
+	print '<dl>';
 
-	if ($evidence_records > 0) {
-
+	if ($evidence_records > 0 || get_filter_request_var('actual')) {
+		$data = array();
 		$data = plugin_evidence_history($host_id);
+
+		if (get_filter_request_var('actual')) {
+			if (isset($data['entity']) && isset($act_data['entity'])) {
+				$data['entity'] += $act_data['entity'];
+			}
+			if (isset($data['mac']) && isset($act_data['mac'])) {
+				$data['mac'] += $act_data['mac'];
+			}
+			if (isset($data['ip']) && isset($act_data['ip'])) {
+				$data['ip'] += $act_data['ip'];
+			}
+			if (isset($data['spec']) && isset($act_data['spec'])) {
+				$data['spec'] += $act_data['spec'];
+			}
+			if (isset($data['opt']) && isset($act_data['opt'])) {
+				$data['opt'] += $act_data['opt'];
+			}
+			if (isset($act_date)) {
+				array_unshift($data['dates'], $act_date);
+			}
+		}
 
 		if (!isset($data['dates'])) {
 			print __('No older data yet', 'evidence');
@@ -1035,7 +971,12 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 
 					if (isset($data_compare_entity) && cacti_sizeof($data_compare_entity)) {
 						foreach ($data_compare_entity as &$row) {
-							unset($row['scan_date']);
+							if (isset($row['scan_date'])) {
+								unset($row['scan_date']);
+								unset($row['host_id']);
+								unset($row['organization_id']);
+								unset($row['organization_name']);
+							}
 						}
 					}
 
@@ -1043,7 +984,7 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 						foreach ($data_compare_mac as &$row) {
 							if (isset($row['scan_date'])) {
 								unset($row['scan_date']);
-							}
+								}
 						}
 					}
 
@@ -1051,6 +992,9 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 						foreach ($data_compare_ip as &$row) {
 							if (isset($row['scan_date'])) {
 								unset($row['scan_date']);
+								unset($row['mandatory']);
+								unset($row['sysobjectid']);
+								unset($row['host_id']);
 							}
 						}
 					}
@@ -1059,13 +1003,21 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 						foreach ($data_compare_spec as &$row) {
 							if (isset($row['scan_date'])) {
 								unset($row['scan_date']);
+								unset($row['mandatory']);
+								unset($row['sysobjectid']);
+								unset($row['host_id']);
 							}
 						}
 					}
 
 					if (isset($data['entity'][$date]) && cacti_sizeof($data['entity'][$date])) {
 						foreach ($data['entity'][$date] as &$row) {
-							unset($row['scan_date']);
+							if (isset($row['scan_date'])) {
+								unset($row['scan_date']);
+								unset($row['host_id']);
+								unset($row['organization_id']);
+								unset($row['organization_name']);
+							}
 						}
 					}
 
@@ -1082,76 +1034,75 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 					if (isset($data['spec'][$date]) && cacti_sizeof($data['spec'][$date])) {
 						foreach ($data['spec'][$date] as &$row) {
 							unset($row['scan_date']);
+							unset($row['mandatory']);
+							unset($row['sysobjectid']);
+							unset($row['host_id']);
 						}
 					}
 
 					if (cacti_sizeof($data_compare_entity) > 0 && isset($data['entity'][$date]) && $data_compare_entity != $data['entity'][$date]) {
 						$change = true;
-						$where = __('Entity', 'evidence');
+						$where .= __('Entity', 'evidence') . '<i class="fas fa-long-arrow-alt-up"></i>';
 					}
 
 					if (cacti_sizeof($data_compare_mac) > 0 && isset($data['mac'][$date]) && $data_compare_mac != $data['mac'][$date]) {
 						$change = true;
-						$where = __('MAC addresses', 'evidence');
+						$where .= __('MAC addresses', 'evidence') . '<i class="fas fa-long-arrow-alt-up"></i>';
 					}
 
 					if (cacti_sizeof($data_compare_ip) > 0 && isset($data['ip'][$date]) && $data_compare_ip != $data['ip'][$date]) {
 						$change = true;
-						$where = __('IP addresses', 'evidence');
+						$where .= __('IP addresses', 'evidence') . '<i class="fas fa-long-arrow-alt-up"></i>';
 					}
 
 					if (cacti_sizeof($data_compare_spec) > 0 && isset($data['spec'][$date]) && $data_compare_spec != $data['spec'][$date]) {
-
 						$change = true;
-						$where = __('Vendor specific', 'evidence');
+						$where .= __('Vendor specific', 'evidence') . '<i class="fas fa-long-arrow-alt-up"></i>';
 					}
 				}
 
 				if ($change) {
-					print '<dt><b>' . $date . ' ' . __('Changed', 'evidence') .' - ' .$where . '</b></dt>';
+					print '<dt><span class="bold drillDown">' . $date . ' ' . __('Changed', 'evidence') .' - ' .$where . '</span></dt>';
 				} else {
-					print '<dt><b>' . $date . '</b></dt>';
+					print '<dt><span class="bold drillDown">' . $date . '</span></dt>';
 				}
 				print '<dd>';
 
-				if (isset($data['entity'][$date]) && (array_key_exists($datatype, $entities) || $datatype == 'all')) {
+				if (isset($data['entity'][$date])) {
 
-					print 'Entity MIB:<br/>';
-		
+					print '<div class="paragraph_entity">';
+					print '<span class="bold">Entity MIB:</span><br/>';
+
 					$data_compare_entity = $data['entity'][$date];
 
 					foreach($data['entity'][$date] as $entity) {
-						if ($datatype == 'all') {
+						unset($entity['scan_date']);
+						unset($entity['host_id']);
+						unset($entity['organization_id']);
+						unset($entity['organization_name']);
 
-							unset($entity['scan_date']);
 
-							unset($entity['host_id']);
-							unset($entity['organization_id']);
-							unset($entity['organization_name']);
-
-							foreach ($entity as $key => $value) {
-								if ($value != '') {
-									print $key . ': ' . $value . ' | ';
-								}
+						foreach ($entity as $key => $value) {
+							if ($value != '') {
+								print $key . ': ' . $value . ' | ';
 							}
-
-							print '<br/>';
-						} else if (array_key_exists($datatype, $entity)) {
-							print $datatype . ': ';
-							print $entity[$datatype];
-							print '<br/>';
 						}
+						print '<br/>';
 					}
+					print '<br/><br/>';
+					print '</div>';
 				} else {
 					$data_compare_entity = array();
 				}
 
-				if (($datatype == 'all' || $datatype == 'mac') && isset($data['mac'][$date])) {
+
+				if (isset($data['mac'][$date])) {
 					$count = 0;
 
 					$data_compare_mac = $data['mac'][$date];
 
-					print '<br/>MAC addresses:<br/>';
+					print '<div class="paragraph_mac">';
+					print '<span class="bold">MAC:</span><br/>';
 					print '<table class="cactiTable"><tr>';
 
 					foreach($data['mac'][$date] as $mac) {
@@ -1163,17 +1114,19 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 						}
 					}
 					print '</tr></table>';
-					
+					print '<br/><br/>';
+					print '</div>';
 				} else {
 					$data_compare_mac = array();
 				}
 
-				if (($datatype == 'all' || $datatype == 'ip') && isset($data['ip'][$date])) {
+				if (isset($data['ip'][$date])) {
 					$count = 0;
 
 					$data_compare_ip = $data['ip'][$date];
 
-					print '<br/>IP addresses:<br/>';
+					print '<div class="paragraph_ip">';
+					print '<span class="bold">IP:</span><br/>';
 					print '<table class="cactiTable"><tr>';
 
 					foreach($data['ip'][$date] as $ip) {
@@ -1185,15 +1138,18 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 						}
 					}
 					print '</tr></table>';
-					
+					print '<br/><br/>';
+					print '</div>';
 				} else {
 					$data_compare_ip = array();
 				}
 
-				if (($datatype == 'all' || $datatype == 'spec') && isset($data['spec'][$date])) {
+				if (isset($data['spec'][$date])) {
 					$data_compare_spec = $data['spec'][$date];
 
-					print '<br/>Vendor specific:<br/>';
+					print '<div class="paragraph_specific">';
+					print '<span class="bold">Vendor specific:</span><br/>';
+
 					foreach($data['spec'][$date] as $spec) {
 						unset($spec['host_id']);
 						unset($spec['mandatory']);
@@ -1213,12 +1169,16 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 
 						print '<br/>';
 					}
+					print '<br/><br/>';
+					print '</div>';
 				} else {
 					$data_compare_spec = array();
 				}
 
-				if (($datatype == 'all' || $datatype == 'opt') && isset($data['opt'][$date])) {
-					print '<br/>Vendor optional:<br/>';
+				if (isset($data['opt'][$date])) {
+
+					print '<div class="paragraph_optional">';
+					print '<span class="bold">Vendor optional:</span><br/>';
 
 					foreach($data['opt'][$date] as $opt) {
 						unset($opt['host_id']);
@@ -1239,7 +1199,8 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 
 						print '<br/>';
 					}
-
+					print '<br/><br/>';
+					print '</div>';
 				}
 				print '</dd>';
 			}
@@ -1251,11 +1212,14 @@ function evidence_show_host_data ($host_id, $datatype, $scan_date) {
 }
 
 
+// show actual data for device on host edit page
+function evidence_show_host_info ($data) {
 
-function evidence_show_actual_data ($data) {
 	global $config;
 
 	include_once($config['base_path'] . '/plugins/evidence/include/arrays.php');
+
+	$short = false;
 
 	if (isset($data['org_name'])) {
 		print $data['org_name'];
@@ -1264,10 +1228,17 @@ function evidence_show_actual_data ($data) {
 	if (isset($data['org_id'])) {
 		print ' (' . $data['org_id'] . ')';
 	}
-
+	
 	if (isset($data['entity'])) {
-		print '<br/><b>Entity MIB:</b><br/>';
-		print '<table class="cactiTable"><tr>';
+		print '<br/><br/><span class="bold">Entity MIB:</span><br/>';
+
+		if (cacti_sizeof($data['entity']) > 4) {
+			$data['entity'] = array_slice($data['entity'], 0, 3);
+			$short = true;
+		}
+
+		print '<table class="cactiTable"><tr class="top">';
+
 
 		foreach ($data['entity'] as $row) {
 			print '<td>';
@@ -1280,11 +1251,15 @@ function evidence_show_actual_data ($data) {
 
 		}
 		print '</tr></table>';
+
+		if ($short) {
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php">I only show the first 3 items, for the full listing click here</a><br/>';
+		}
 	}
 
 	if (isset($data['mac'])) {
 		$count = 0;
-		print '<br/><b>MAC:</b><br/>';
+		print '<br/><span class="bold">MAC addresses:</span><br/>';
 		print '<table class="cactiTable"><tr>';
 
 		foreach ($data['mac'] as $mac) {
@@ -1300,7 +1275,7 @@ function evidence_show_actual_data ($data) {
 
 	if (isset($data['ip'])) {
 		$count = 0;
-		print '<br/><b>IP:</b><br/>';
+		print '<br/><span class="bold">IP addresses:</span><br/>';
 		print '<table class="cactiTable"><tr>';
 
 		foreach ($data['ip'] as $ip) {
@@ -1315,7 +1290,7 @@ function evidence_show_actual_data ($data) {
 	}
 
 	if (isset($data['spec'])) {
-		print '<br/><b>Vendor specific:</b><br/>';
+		print '<br/><span class="bold">Vendor specific:</span><br/>';
 
 		foreach ($data['spec'] as $row) {
 			print $row['description'] . ': ';
@@ -1334,7 +1309,7 @@ function evidence_show_actual_data ($data) {
 	}
 
 	if (isset($data['opt'])) {
-		print '<br/><b>Vendor optional:</b><br/>';
+		print '<br/><span class="bold">Vendor optional:</span><br/>';
 
 		foreach ($data['opt'] as $row) {
 			print $row['description'] . ': ';
@@ -1352,6 +1327,111 @@ function evidence_show_actual_data ($data) {
 		}
 	}
 }
+
+
+function evidence_show_actual_data ($data) {
+	global $config;
+
+	include_once($config['base_path'] . '/plugins/evidence/include/arrays.php');
+
+	if (isset($data['org_name'])) {
+		print $data['org_name'];
+	}
+
+	if (isset($data['org_id'])) {
+		print ' (' . $data['org_id'] . ')';
+	}
+	
+	if (isset($data['entity'])) {
+		print '<br/><span class="bold">Entity MIB:</span><br/>';
+
+		print '<table class="cactiTable"><tr class="top">';
+
+		foreach ($data['entity'] as $row) {
+			print '<td>';
+			foreach ($row as $key => $value) {
+				if ($value != '') {
+					print $key . ': ' . $value . '<br/>';
+				}
+			}
+			print '</td>';
+
+		}
+		print '</tr></table>';
+	}
+
+	if (isset($data['mac'])) {
+		$count = 0;
+		print '<br/><class="bold">MAC addresses:</span><br/>';
+		print '<table class="cactiTable"><tr>';
+
+		foreach ($data['mac'] as $mac) {
+			print '<td>' . $mac . '</td>';
+			$count++;
+			if ($count > 4) {
+				$count = 0;
+				print '</tr><tr>';
+			}
+		}
+		print '</tr></table>';
+	}
+
+	if (isset($data['ip'])) {
+		$count = 0;
+		print '<br/><span class="bold">IP addresses:</span><br/>';
+		print '<table class="cactiTable"><tr>';
+
+		foreach ($data['ip'] as $ip) {
+			print '<td>' . $ip . '</td>';
+			$count++;
+			if ($count > 4) {
+				$count = 0;
+				print '</tr><tr>';
+			}
+		}
+		print '</tr></table>';
+	}
+
+	if (isset($data['spec'])) {
+		print '<br/><span class="bold">Vendor specific:</span><br/>';
+
+		foreach ($data['spec'] as $row) {
+			print $row['description'] . ': ';
+			print display_tooltip('OID: ' . $row['oid']);
+
+			if (!is_array($row['value'])) {
+				print $row['value'] . '</br>';
+			} else {
+				// nested array
+				foreach ($row['value'] as $key => $value) {
+					print implode(', ', $value);
+				}
+				print '<br/>';
+			}
+		}
+	}
+
+	if (isset($data['opt'])) {
+		print '<br/><span class="bold">Vendor optional:</span><br/>';
+
+		foreach ($data['opt'] as $row) {
+			print $row['description'] . ': ';
+			print display_tooltip('OID: ' . $row['oid']);
+
+			if (!is_array($row['value'])) {
+				print $row['value'] . '</br>';
+			} else {
+				// nested array
+				foreach ($row['value'] as $key => $value) {
+					print implode(', ', $value);
+				}
+				print '<br/>';
+			}
+		}
+	}
+}
+
+
 
 function plugin_evidence_array_to_table ($array, $columns = 1) {
 
@@ -1390,3 +1470,4 @@ function plugin_evidence_array_to_table ($array, $columns = 1) {
 
 	return $output;
 }
+
