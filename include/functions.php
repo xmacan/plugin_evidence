@@ -69,10 +69,31 @@ function plugin_evidence_device_edit_top_links (){
 	print "<br/><span class='linkMarker'>* </span><a id='evidence_info' data-evidence_id='" . get_filter_request_var('id') . "' href=''>" . __('Evidence') . "</a>";
 }
 
-
 function plugin_evidence_host_edit_bottom () {
 	global $config;
 	print get_md5_include_js($config['base_path'] . '/plugins/evidence/evidence.js');
+
+	if (read_config_option('evidence_show_host_data')) {
+		include_once('./plugins/evidence/include/functions.php');
+		print '<br/><br/>';
+
+		$host = db_fetch_row_prepared ('SELECT host.*, host_template.name as `template_name`
+			FROM host
+			LEFT JOIN host_template
+			ON host.host_template_id = host_template.id
+			WHERE host.id = ?',
+			array(get_filter_request_var('id')));
+
+		if (cacti_sizeof($host)) {
+			$data = plugin_evidence_actual_data($host);
+			html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
+			print "<tr class='tableHeader'><th>Data</th></tr><tr><td>";
+			evidence_show_host_info ($data);
+			print '</td></tr>';
+			html_end_box(false);
+		}
+		print '<br/><br/>';
+	}
 }
 
 
@@ -678,7 +699,7 @@ function plugin_evidence_find() {
 		return false;
 	}
 
-	$f = get_request_var('find_text');
+	$f = trim(get_request_var('find_text'));
 
 	$sql_where = "descr RLIKE '" . $f . "'
 		OR name RLIKE '" . $f . "'
@@ -840,7 +861,9 @@ function plugin_evidence_time_to_run() {
 	$baselower = $basetime - 300;
 	$now       = time();
 
-	cacti_log("LastRun:'$lastrun', Frequency:'$frequency' sec, BaseTime:'" . date('Y-m-d H:i:s', $basetime) . "', BaseUpper:'$baseupper', BaseLower:'$baselower', Now:'" . date('Y-m-d H:i:s', $now) . "'", false, 'EVIDENCE');
+	cacti_log(sprintf ('Last Run: %s, Frequency: %s sec, BaseTime: %s, BaseUpper: %s, BaseLower: %s', 
+		date('Y-m-d H:i:s', $lastrun), $frequency, date('Y-m-d H:i:s', $basetime), 
+		date('Y-m-d H:i:s', $baseupper), date('Y-m-d H:i:s', $baselower)) , false, 'EVIDENCE');
 
 	if ($frequency > 0 && ($now - $lastrun > $frequency)) {
 		if (empty($lastrun) && ($now < $baseupper) && ($now > $baselower)) {
