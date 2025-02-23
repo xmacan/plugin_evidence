@@ -2,24 +2,24 @@
 
 ## Try find serial number, version and important information about devices
 
-A lot of vendors support SNMP Entity MIB (HPE, Synology, Cisco, Mikrotik, Fortinet, ...).
-There are information about serial numbers, part numbers, versions, firmware, ..
-For few vendors I added vendor specific OIDs (Aruba, Mikrotik, Synology, ..).
-It can be useful when you need to find serial number, firmware change, problematic firmware, ...
+A lot of vendors support SNMP Entity MIB (HPE, Synology, Cisco, Mikrotik, Fortinet, etc).
+There is information about serial numbers, part numbers, versions, firmware, etc.
+For few vendors I have added vendor specific OIDs (Aruba, Mikrotik, Synology, ..).
+It can be useful when you need to find serial number, firmware change, or problematic firmware.
 
 ## Author
 Petr Macek (petr.macek@kostax.cz)
 
 
 ## Installation
-Copy directory evidence to plugins directory (keep lowercase)
+Copy directory plugin_evidence to plugins directory (keep lowercase)
 Check file permission (Linux/unix - readable for www server)
 Enable plugin (Console -> Plugin management)
 Configure plugin (Console -> Settings -> Evidence tab
 
 ## How to use?
 You will see information about serial numbers and version on each supported device
-You can use Evidence tab or link on edit device page
+You can use the Evidence tab or link on edit device page
 
 ## Upgrade
 Copy and rewrite files
