@@ -184,7 +184,7 @@ function plugin_evidence_get_entity_data($h) {
 		$h['snmp_auth_protocol'], $h['snmp_priv_passphrase'], $h['snmp_priv_protocol'], 
 		$h['snmp_context'], $h['snmp_port'], $h['snmp_timeout']);
 
-	/* Some devides doesn't use index, trying normal data */
+	/* Some devices doesn't use index, trying normal data */
 	if (!cacti_sizeof($indexes)) {
 
 		$data_descr = @cacti_snmp_walk($h['hostname'], $h['snmp_community'], '.1.3.6.1.2.1.47.1.1.1.1.2',

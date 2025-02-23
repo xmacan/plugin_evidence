@@ -295,7 +295,7 @@ if (cacti_sizeof($hosts) > 0) {
 			evidence_debug('Host ' . $host['id'] . ' history records not found, only store new data');
 		}
 
-		/* comparasion with old data */
+		/* comparison with old data */
 		if ($old_data && (cacti_sizeof($data_entity_his) > 0 || cacti_sizeof($data_mac_his) > 0 ||
 			cacti_sizeof($data_ip_his) > 0 || cacti_sizeof($data_spec_his) > 0)) {
 
@@ -358,15 +358,15 @@ if (cacti_sizeof($hosts) > 0) {
 
 						if (isset($data_mac)) {
 							$text .= $diff['mac'] ? '<font color="red">' : '';
-							$text .= 'Actual MAC adresses:' . plugin_evidence_array_to_table($data_mac, 5) . '<br/><br/>' . PHP_EOL .
-								'Older MAC adresses:' . plugin_evidence_array_to_table($data_mac_his, 5) . '<br/><br/>' . PHP_EOL;
+							$text .= 'Actual MAC addresses:' . plugin_evidence_array_to_table($data_mac, 5) . '<br/><br/>' . PHP_EOL .
+								'Older MAC addresses:' . plugin_evidence_array_to_table($data_mac_his, 5) . '<br/><br/>' . PHP_EOL;
 							$text .= $diff['mac'] ? '</font>' : '';
 						}
 
 						if (isset($data_ip)) {
 							$text .= $diff['ip'] ? '<font color="red">' : '';
-							$text .= 'Actual IP adresses:' . plugin_evidence_array_to_table($data_ip, 3) . '<br/><br/>' . PHP_EOL .
-								'Older IP adresses:' . plugin_evidence_array_to_table($data_ip_his, 3) . '<br/><br/>' . PHP_EOL;
+							$text .= 'Actual IP addresses:' . plugin_evidence_array_to_table($data_ip, 3) . '<br/><br/>' . PHP_EOL .
+								'Older IP addresses:' . plugin_evidence_array_to_table($data_ip_his, 3) . '<br/><br/>' . PHP_EOL;
 							$text .= $diff['ip'] ? '</font>' : '';
 						}
 

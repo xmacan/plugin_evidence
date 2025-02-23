@@ -243,8 +243,8 @@ function evidence_stats() {
 	print '<strong>' . __('Number of records') . ':</strong><br/>';
 	print 'Devices: ' . $dev . ' records<br/>';
 	print 'Entity MIB: ' . $ent . ', records, ' . $vnd . ' vendors<br/>';
-	print 'Unique MAC adresses: ' . $mac . '<br/>';
-	print 'Unique IP adresses: ' . $ip . '<br/>';
+	print 'Unique MAC addresses: ' . $mac . '<br/>';
+	print 'Unique IP addresses: ' . $ip . '<br/>';
 	print 'Vendor specific data: ' . $ven . '<br/>';
 	print 'Oldest record: ' . $old . '<br/>';
 }
@@ -267,7 +267,7 @@ function evidence_show_checkboxes() {
 	print '<input type="checkbox" id="ch_mac" name="ch_mac" value="1" checked="checked"><label for="ch_mac">MAC address</label>';
 	print '</td>';
 	print '<td>';
-	print '<input type="checkbox" id="ch_ip" name="ch_ip" value="1" checked="checked"><label for="ch_ip">IP adress</label>';
+	print '<input type="checkbox" id="ch_ip" name="ch_ip" value="1" checked="checked"><label for="ch_ip">IP address</label>';
 	print '</td>';
 	print '<td>';
 	print '<input type="checkbox" id="ch_specific" name="ch_vendor" value="1" checked="checked"><label for="ch_specific">Vendor spec.</label>';
