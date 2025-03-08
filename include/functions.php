@@ -870,7 +870,7 @@ function plugin_evidence_time_to_run() {
 
 	cacti_log(sprintf ('Last Run: %s, Frequency: %s sec, BaseTime: %s, BaseUpper: %s, BaseLower: %s', 
 		date('Y-m-d H:i:s', $lastrun), $frequency, date('Y-m-d H:i:s', $basetime), 
-		date('Y-m-d H:i:s', $baseupper), date('Y-m-d H:i:s', $baselower)) , false, 'EVIDENCE');
+		date('Y-m-d H:i:s', $baseupper), date('Y-m-d H:i:s', $baselower)) , false, 'EVIDENCE', POLLER_VERBOSITY_HIGH);
 
 	if ($frequency > 0 && ($now - $lastrun > $frequency)) {
 		if (empty($lastrun) && ($now < $baseupper) && ($now > $baselower)) {
