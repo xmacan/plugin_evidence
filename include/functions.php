@@ -821,10 +821,14 @@ function plugin_evidence_actual_data ($host) {
 				$data_spec_x[$key]['description'] = $val['description'];
 				$data_spec_x[$key]['oid'] = $val['oid'];
 
-				if (is_array($val['value'])) {
+				if (isset($val['value']) && is_array($val['value'])) {
 					$data_spec_x[$key]['value'][] = $val['value'];
 				} else {
-					$data_spec_x[$key]['value'] = $val['value'];
+					if (isset($val['value'])) {
+						$data_spec_x[$key]['value'] = $val['value'];
+					} else {
+						$data_spec_x[$key]['value'] = 'Data error #1';
+					}
 				}
 			}
 
