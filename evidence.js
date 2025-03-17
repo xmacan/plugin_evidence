@@ -8,6 +8,7 @@ var show_expand_latest = false;
 
 
 $(function() {
+
 	// used in host.php
 	$('#evidence_info').click(function(event) {
 
@@ -60,7 +61,7 @@ $(function() {
 			$('.paragraph_entity').css('display','none');
 		} else {
 			show_entity = true;
-			$('.paragraph_entity').css('display','inline-block');
+			$('.paragraph_entity').css('display','block');
 		}
 	});
 
@@ -75,7 +76,7 @@ $(function() {
 			$('.paragraph_mac').css('display','none');
 		} else {
 			show_mac = true;
-			$('.paragraph_mac').css('display','inline-block');
+			$('.paragraph_mac').css('display','block');
 		}
 	});
 
@@ -85,7 +86,7 @@ $(function() {
 			$('.paragraph_ip').css('display','none');
 		} else {
 			show_ip = true;
-			$('.paragraph_ip').css('display','inline-block');
+			$('.paragraph_ip').css('display','block');
 		}
 	});
 
@@ -94,8 +95,8 @@ $(function() {
 			show_specific = false;
 			$('.paragraph_specific').css('display','none');
 		} else {
-			show_optional = true;
-			$('.paragraph_specific').css('display','inline-block');
+			show_specific = true;
+			$('.paragraph_specific').css('display','block');
 		}
 	});
 
@@ -105,7 +106,7 @@ $(function() {
 			$('.paragraph_optional').css('display','none');
 		} else {
 			show_optional = true;
-			$('.paragraph_optional').css('display','inline-block');
+			$('.paragraph_optional').css('display','block');
 		}
 	});
 });
@@ -115,6 +116,8 @@ $(function() {
 function applyFilter() {
 	strURL  = 'evidence_tab.php' +
 		'?host_id=' + $('#host_id').val() +
+		'&template_id=' + $('#template_id').val() +
+		'&scan_date=' + $('#scan_date').val() +
 		'&header=false&action=find';
 	loadPageNoHeader(strURL);
 }

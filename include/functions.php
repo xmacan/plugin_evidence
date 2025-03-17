@@ -912,6 +912,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 	$data_compare_ip     = array();
 	$data_compare_spec   = array();
 	$latest = true;
+	$act_date = '';
 
 	$host = db_fetch_row_prepared ('SELECT host.*, host_template.name as `template_name`
 		FROM host
@@ -923,8 +924,11 @@ function evidence_show_host_data ($host_id, $scan_date) {
 	print '<h3>' . $host['description'] . ' (' . $host['hostname'] . ', ' . $host['template_name'] . ')</h3>';
 
 	if (!get_filter_request_var('actual')) {
-		print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' .
-		$host_id . '&template=&actual=1&action=find">' . __('Also show actual data', 'evidence') . '</a>';
+		print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?' .
+			'host_id=' . $host_id .
+			'&template_id=' . get_filter_request_var('template_id') .
+			'&scan_date=' . get_nfilter_request_var('scan_date') . 
+			'&actual=1&action=find">' . __('Also show actual data', 'evidence') . '</a>';
 		print '<br/>';
 	} else {  // show actual data
 
@@ -959,7 +963,6 @@ function evidence_show_host_data ($host_id, $scan_date) {
 	}
 
 	print '<dl>';
-
 	if ($evidence_records > 0 || get_filter_request_var('actual')) {
 		$data = array();
 		$data = plugin_evidence_history($host_id);
@@ -1104,10 +1107,12 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					$lclass = '';
 				}
 
+				$act = $date == $act_date ? __('Actual data', 'evidence') : '';
+
 				if ($change) {
-					print '<dt><span class="bold drillDown ' . $lclass . '">' . $date . ' ' . __('Changed', 'evidence') .' - ' .$where . '</span></dt>';
+					print '<dt><span class="bold drillDown ' . $lclass . '">' . $date . ' ' . __('Changed', 'evidence') .' - ' .$where . ' ' . $act . '</span></dt>';
 				} else {
-					print '<dt><span class="bold drillDown ' . $lclass . '">' . $date . '</span></dt>';
+					print '<dt><span class="bold drillDown ' . $lclass . '">' . $date . ' ' . $act . '</span></dt>';
 				}
 				print '<dd>';
 
