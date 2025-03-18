@@ -224,7 +224,6 @@ function evidence_stats() {
 
 	print '<br/><br/>';
 	print __('You can display all information about specific host, all devices with the same template.') . '<br/>';
-	print __('You can display for example only serial numbers for all devices via specify entity.') . '<br/>';
 	print __('You can search any string in all data.') . '<br/>';
 	print __('Note when using Scan Date - Only the data that changed at the moment of Scan_date is displayed. Data not changed at that time is not displayed.') . '<br/>';
 
