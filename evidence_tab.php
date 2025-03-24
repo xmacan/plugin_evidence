@@ -246,6 +246,32 @@ function evidence_stats() {
 	print 'Unique IP addresses: ' . $ip . '<br/>';
 	print 'Vendor specific data: ' . $ven . '<br/>';
 	print 'Oldest record: ' . $old . '<br/>';
+	print '<br/><br/>';
+
+	$treemap = array(
+		'label' => array(),
+		'data'  => array(),
+	);
+
+
+	$vendors = db_fetch_assoc('SELECT count(distinct(host_id)) AS `count`, organization
+		FROM plugin_evidence_entity AS pee
+		JOIN plugin_evidence_organization AS peo
+		ON pee.organization_id = peo.id
+		GROUP BY pee.organization_id');
+
+	if (cacti_sizeof($vendors)) {
+
+		$data = array();
+
+		foreach ($vendors as $vendor) {
+			array_push($treemap['label'], $vendor['organization']);
+			array_push($treemap['data'], $vendor['count']);
+		}
+		
+		print '<strong>Vendors:</strong><br />';
+		evidence_treemap('Vendors', $treemap);
+	}
 }
 
 function evidence_show_checkboxes() {
@@ -276,4 +302,43 @@ function evidence_show_checkboxes() {
 	print '</td>';
 	print '</tr>';
 	print '</table>';
+}
+
+
+function evidence_treemap($title, $data) {
+
+	$xid = 'x'. substr(md5($title), 0, 7);
+
+	echo "<div class='chart_wrapper center' id=\"treemap_$xid\"></div>";
+	echo '<script type="text/javascript">';
+	echo 'treemap_' . $xid . ' = bb.generate({';
+	echo " bindto: \"#treemap_$xid\",";
+
+	echo " size: {";
+	echo "  width: 450,";
+	echo "  height: 200";
+	echo " },";
+
+	echo " data: {";
+	echo "  columns: [";
+
+	foreach ($data['data'] as $key => $value) {
+		echo "['" . $data['label'][$key] . "', " . $value . "],";
+	}
+
+	echo "  ],";
+	echo "  type: 'treemap',";
+	echo "  labels: {";
+	echo "    colors: '#fff'";
+	echo "  }";
+	echo "  },";
+
+	echo "  treemap: {";
+	echo "    label: {";
+	echo "      threshold: 0.03, show: true,";
+	echo "    }";
+	echo "  },";
+
+	echo "});";
+	echo "</script>";
 }
