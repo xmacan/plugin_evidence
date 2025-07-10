@@ -60,6 +60,10 @@ function plugin_evidence_uninstall () {
 	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_vendor_specific'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_vendor_specific`");
 	}
+
+	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_snmp_info'")) > 0 ) {
+		db_execute("DROP TABLE `plugin_evidence_snmp_info`");
+	}
 }
 
 
