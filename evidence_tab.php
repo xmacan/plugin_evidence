@@ -69,6 +69,12 @@ function evidence_display_form() {
 	$host_where = '';
 
 	$host_id = get_filter_request_var('host_id');
+	$template_id = get_filter_request_var('template_id');
+
+	if (isset_request_var('scan_date') && get_nfilter_request_var('scan_date') != '' &&
+		$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)))) {
+		
+	}
 
 	print '<form name="form_evidence" action="evidence_tab.php">';
 
@@ -111,7 +117,8 @@ function evidence_display_form() {
 	print '<select id="scan_date" name="scan_date">';
 	print '<option value="-1" ' . (get_request_var('scan_date') == -1 ? 'selected="selected"' : '') . '>' . __('All', 'evidence') . '</option>';
 
-	$scan_dates = array_column(db_fetch_assoc('SELECT DISTINCT(scan_date) FROM plugin_evidence_entity
+	$scan_dates = array_column(db_fetch_assoc('SELECT DISTINCT(scan_date) FROM plugin_evidence_snmp_info
+		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_entity
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_mac
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_ip
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_vendor_specific
@@ -285,6 +292,9 @@ function evidence_show_checkboxes() {
 	print '</td>';
 
 	print '<td>' . __('Show or hide', 'evidence') . ':</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_snmp_info" name="ch_snmp_info" value="1" checked="checked"><label for="ch_entity">SNMP info</label>';
+	print '</td>';
 	print '<td>';
 	print '<input type="checkbox" id="ch_entity" name="ch_entity" value="1" checked="checked"><label for="ch_entity">Entity MIB</label>';
 	print '</td>';
