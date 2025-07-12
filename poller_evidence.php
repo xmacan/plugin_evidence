@@ -585,6 +585,7 @@ $pstats = 'Time:' . round($poller_end-$poller_start, 2) . ', Devices:' . $device
 	' Mac:' . $rec_mac . ' IP:' . $rec_ip . ' Specific: ' . $rec_spec . ' Optional:' . $rec_opt;
 
 cacti_log('EVIDENCE STATS: ' . $pstats, false, 'SYSTEM');
+evidence_debug($pstats);
 set_config_option('plugin_evidence_stats', $pstats);
 
 if (function_exists('unregister_process')) {
