@@ -69,6 +69,9 @@ function evidence_display_form() {
 	$host_where = '';
 
 	$host_id = get_filter_request_var('host_id');
+	$template_id = get_filter_request_var('template_id');
+	$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)));
+	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/[^[:print:]\r\n]/', 'default' => '')));
 
 	print '<form name="form_evidence" action="evidence_tab.php">';
 
@@ -88,14 +91,14 @@ function evidence_display_form() {
 	print "<td>";
 
 	print "<select id='template_id' name='template_id'>";
-	print "<option value='-1'" . (get_request_var('template_id') == '-1' ? ' selected' : '') . '>' . __('Any') . '</option>';
+	print "<option value='-1'" . (get_filter_request_var('template_id') == '-1' ? ' selected' : '') . '>' . __('Any') . '</option>';
 
 	$templates = db_fetch_assoc('SELECT id, name FROM host_template');
 
 	if (cacti_sizeof($templates)) {
 		foreach ($templates as $template) {
 			print '<option value="' . $template['id'] . '"' .
-			(get_request_var('template_id') == $template['id'] ? ' selected="selected"' : '') . '>' .
+			(get_filter_request_var('template_id') == $template['id'] ? ' selected="selected"' : '') . '>' .
 			html_escape($template['name']) . '</option>';
 		}
 	}
@@ -109,19 +112,20 @@ function evidence_display_form() {
 	print '<td>';
 
 	print '<select id="scan_date" name="scan_date">';
-	print '<option value="-1" ' . (get_request_var('scan_date') == -1 ? 'selected="selected"' : '') . '>' . __('All', 'evidence') . '</option>';
+	print '<option value="-1" ' . ($scan_date == -1 ? 'selected="selected"' : '') . '>' . __('All', 'evidence') . '</option>';
 
-	$scan_dates = array_column(db_fetch_assoc('SELECT DISTINCT(scan_date) FROM plugin_evidence_entity
+	$scan_dates = array_column(db_fetch_assoc('SELECT DISTINCT(scan_date) FROM plugin_evidence_snmp_info
+		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_entity
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_mac
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_ip
 		UNION SELECT DISTINCT(scan_date) FROM plugin_evidence_vendor_specific
 		ORDER BY scan_date DESC'), 'scan_date');
 
 	if (cacti_sizeof($scan_dates)) {
-		foreach ($scan_dates as $scan_date) {
-			print '<option value="' . $scan_date . '" ' . 
-				(get_request_var('scan_date') == $scan_date ? ' selected="selected"' : '') . 
-				'>' . $scan_date . '</option>';
+		foreach ($scan_dates as $sdate) {
+			print '<option value="' . $sdate . '" ' . 
+				($scan_date == $sdate ? ' selected="selected"' : '') . 
+				'>' . $sdate . '</option>';
 		}
 	}
 
@@ -142,7 +146,7 @@ function evidence_display_form() {
 	print '</td>';
 	print '<td>';
 
-	print '<input type="text" name="find_text" id="find" value="' . get_request_var('find_text') . '">';
+	print '<input type="text" name="find_text" id="find" value="' . $find_text . '">';
 	print '</td>';
 	print '<td>';
 	print 'You can search serial number, firmware version, ip, mac address,...';
@@ -166,11 +170,7 @@ function evidence_find() {
 		$host_id = get_filter_request_var('host_id');
 	}
 
-	if (get_request_var('scan_date') != -1) {
-		$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/')));
-	} else {
-		$scan_date = null;
-	}
+	$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', 'default' => null)));
 
 	if (in_array(get_filter_request_var('template_id'), array_column($templates, 'id'))) {
 		$template_id = get_filter_request_var('template_id');
@@ -285,6 +285,9 @@ function evidence_show_checkboxes() {
 	print '</td>';
 
 	print '<td>' . __('Show or hide', 'evidence') . ':</td>';
+	print '<td>';
+	print '<input type="checkbox" id="ch_snmp_info" name="ch_snmp_info" value="1" checked="checked"><label for="ch_entity">SNMP info</label>';
+	print '</td>';
 	print '<td>';
 	print '<input type="checkbox" id="ch_entity" name="ch_entity" value="1" checked="checked"><label for="ch_entity">Entity MIB</label>';
 	print '</td>';

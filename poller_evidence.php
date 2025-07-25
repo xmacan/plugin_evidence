@@ -152,11 +152,12 @@ if ($evidence_records == 0) {
 }
 
 $scan_date  = date('Y-m-d H:i:s');
-$rec_entity = 0;
-$rec_mac    = 0;
-$rec_ip     = 0;
-$rec_spec   = 0;
-$rec_opt    = 0;
+$rec_snmp_info = 0;
+$rec_entity    = 0;
+$rec_mac       = 0;
+$rec_ip        = 0;
+$rec_spec      = 0;
+$rec_opt       = 0;
 
 evidence_debug('scan date is ' .  $scan_date);
 
@@ -171,16 +172,21 @@ evidence_debug('Found ' . cacti_sizeof($hosts) . ' devices');
 if (cacti_sizeof($hosts) > 0) {
 
 	foreach ($hosts as $host) {
-		$data_entity = array();
-		$data_mac    = array();
-		$data_ip    = array();
-		$data_spec   = array();
-		$data_opt    = array();
-		$old_data    = false;
-		$data_entity_his = array();
-		$data_mac_his    = array();
-		$data_ip_his    = array();
-		$data_spec_his   = array();
+		$data_snmp_info  = array();
+		$data_entity     = array();
+		$data_mac        = array();
+		$data_ip         = array();
+		$data_spec       = array();
+		$data_opt        = array();
+		$old_data        = false;
+		$data_snmp_info_his  = array();
+		$data_entity_his     = array();
+		$data_mac_his        = array();
+		$data_ip_his         = array();
+		$data_spec_his       = array();
+
+		evidence_debug('Host ' . $host['id'] . ' trying SNMP INFO');
+		$data_snmp_info = plugin_evidence_get_snmp_info($host);
 
 		evidence_debug('Host ' . $host['id'] . ' trying ENTITY MIB');
 
@@ -227,6 +233,21 @@ if (cacti_sizeof($hosts) > 0) {
 		}
 
 		evidence_debug('Host ' . $host['id'] . ' data gathering finished');
+
+		$old_scan_date = db_fetch_cell_prepared('SELECT MAX(scan_date)
+			FROM plugin_evidence_snmp_info
+			WHERE host_id = ?',
+			array($host['id']));
+
+		if ($old_scan_date) {
+			$old_data = true;
+
+			$data_snmp_info_his = db_fetch_assoc_prepared ('SELECT sysdescr, syscontact, sysname, syslocation 
+				FROM plugin_evidence_snmp_info
+				WHERE host_id = ? AND
+				scan_date = ?',
+				array($host['id'], $old_scan_date));
+		}
 
 		$old_scan_date = db_fetch_cell_prepared('SELECT MAX(scan_date)
 			FROM plugin_evidence_entity
@@ -296,17 +317,22 @@ if (cacti_sizeof($hosts) > 0) {
 		}
 
 		/* comparison with old data */
-		if ($old_data && (cacti_sizeof($data_entity_his) > 0 || cacti_sizeof($data_mac_his) > 0 ||
-			cacti_sizeof($data_ip_his) > 0 || cacti_sizeof($data_spec_his) > 0)) {
+		if ($old_data && (cacti_sizeof($data_snmp_info_his) > 0 || cacti_sizeof($data_entity_his) > 0 ||
+			cacti_sizeof($data_mac_his) > 0 || cacti_sizeof($data_ip_his) > 0 || cacti_sizeof($data_spec_his) > 0)) {
 
 			evidence_debug('Host ' . $host['id'] . ' comparing with old data');
 
 			$diff = array(
-				'entity' => false,
-				'mac'    => false,
-				'ip'     => false,
-				'spec'   => false
+				'snmp_info' => false,
+				'entity'    => false,
+				'mac'       => false,
+				'ip'        => false,
+				'spec'      => false
 			);
+
+			if ($data_snmp_info !== $data_snmp_info_his) {
+				$diff['snmp_info'] = true;
+			}
 
 			if ($data_entity !== $data_entity_his) {
 				$diff['entity'] = true;
@@ -324,7 +350,7 @@ if (cacti_sizeof($hosts) > 0) {
 				$diff['spec'] = true;
 			}
 
-			if (!$diff['entity'] && !$diff['mac'] && !$diff['ip'] && !$diff['spec']) {
+			if (!$diff['snmp_info'] && !$diff['entity'] && !$diff['mac'] && !$diff['ip'] && !$diff['spec']) {
 				evidence_debug('Host ' . $host['id'] . ' data is the same, nothing to do');
 			} else {
 				evidence_debug('Host ' . $host['id'] . ' different data, maybe notification');
@@ -348,6 +374,13 @@ if (cacti_sizeof($hosts) > 0) {
 
 						$text = 'I have found any HW/serial number change on host ' . $host['description'] .
 							' (' . $host['hostname'] . ')<br/><br/>' . PHP_EOL;
+
+						if (isset($data_snmp_info)) {
+							$text .= $diff['snmp_info'] ? '<font color="red">' : '';
+							$text .= 'Actual snmp info:' . plugin_evidence_array_to_table($data_snmp_info) . '<br/><br/>' . PHP_EOL .
+								'Older snmp info:' . plugin_evidence_array_to_table($data_snmp_info_his) . '<br/><br/>' . PHP_EOL;
+							$text .= $diff['snmp_info'] ? '</font>' : '';
+						}
 
 						if (isset($data_entity)) {
 							$text .= $diff['entity'] ? '<font color="red">' : '';
@@ -393,7 +426,16 @@ if (cacti_sizeof($hosts) > 0) {
 			
 		}
 
-		if (!$old_data || $diff['entity'] || $diff['mac'] || $diff['ip'] || $diff['spec']) { /* saving new data */
+		if (!$old_data || $diff['snmp_info'] || $diff['entity'] || $diff['mac'] || $diff['ip'] || $diff['spec']) { /* saving new data */
+			/* store data from snmp info */
+			if (cacti_sizeof($data_snmp_info) > 0) {
+				db_execute_prepared('INSERT INTO plugin_evidence_snmp_info
+					(host_id, sysdescr, syscontact, sysname, syslocation, scan_date)
+					VALUES (?, ?, ?, ?, ?, ?)',
+					array($host['id'], $data_snmp_info['sysdescr'], $data_snmp_info['syscontact'],
+						$data_snmp_info['sysname'], $data_snmp_info['syslocation'], $scan_date));
+			}
+
 			/* store data from entity mib */
 			if (cacti_sizeof($data_entity) > 0) {
 				foreach ($data_entity as $l) {
@@ -461,6 +503,19 @@ if (cacti_sizeof($hosts) > 0) {
 			/* delete old data */
 
 			$old_date_limit = db_fetch_cell_prepared('SELECT DISTINCT(scan_date)
+				FROM plugin_evidence_snmp_info
+				WHERE host_id = ?
+				ORDER BY scan_date DESC
+				LIMIT ' . $evidence_records . ' , 1',
+				array($host['id']));
+
+			if ($old_date_limit) {
+				db_execute_prepared ('DELETE FROM plugin_evidence_snmp_info
+					WHERE host_id = ? AND scan_date <= ?',
+					array($host['id'], $old_date_limit));
+			}
+
+			$old_date_limit = db_fetch_cell_prepared('SELECT DISTINCT(scan_date)
 				FROM plugin_evidence_entity
 				WHERE host_id = ?
 				ORDER BY scan_date DESC
@@ -513,11 +568,12 @@ if (cacti_sizeof($hosts) > 0) {
 			}
 		}
 
-		$rec_entity += cacti_sizeof($data_entity);
-		$rec_mac    += cacti_sizeof($data_mac);
-		$rec_ip     += cacti_sizeof($data_ip);
-		$rec_spec   += cacti_sizeof($data_spec);
-		$rec_opt    += cacti_sizeof($data_opt);
+		$rec_snmp_info += cacti_sizeof($data_snmp_info);
+		$rec_entity    += cacti_sizeof($data_entity);
+		$rec_mac       += cacti_sizeof($data_mac);
+		$rec_ip        += cacti_sizeof($data_ip);
+		$rec_spec      += cacti_sizeof($data_spec);
+		$rec_opt       += cacti_sizeof($data_opt);
 		$devices++;
 	}
 }
@@ -525,10 +581,11 @@ if (cacti_sizeof($hosts) > 0) {
 
 $poller_end = microtime(true);
 
-$pstats = 'Time:' . round($poller_end-$poller_start, 2) . ', Devices:' . $devices . ' Entity:' . $rec_entity .
+$pstats = 'Time:' . round($poller_end-$poller_start, 2) . ', Devices:' . $devices . ' SNMP Info:' . $rec_snmp_info . ' Entity:' . $rec_entity .
 	' Mac:' . $rec_mac . ' IP:' . $rec_ip . ' Specific: ' . $rec_spec . ' Optional:' . $rec_opt;
 
 cacti_log('EVIDENCE STATS: ' . $pstats, false, 'SYSTEM');
+evidence_debug($pstats);
 set_config_option('plugin_evidence_stats', $pstats);
 
 if (function_exists('unregister_process')) {

@@ -41,24 +41,28 @@ function plugin_evidence_install () {
 
 function plugin_evidence_uninstall () {
 
-	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_specific_query'")) > 0 ) {
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_specific_query'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_specific_query`");
 	}
 
-	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_organization'")) > 0 ) {
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_organization'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_organization`");
 	}
 
-	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_entity'")) > 0 ) {
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_entity'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_entity`");
 	}
 
-	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_mac'")) > 0 ) {
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_mac'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_mac`");
 	}
 
-	if (sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_vendor_specific'")) > 0 ) {
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_vendor_specific'")) > 0 ) {
 		db_execute("DROP TABLE `plugin_evidence_vendor_specific`");
+	}
+
+	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_snmp_info'")) > 0 ) {
+		db_execute("DROP TABLE `plugin_evidence_snmp_info`");
 	}
 }
 

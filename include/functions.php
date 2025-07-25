@@ -44,6 +44,7 @@ function plugin_evidence_poller_bottom() {
 
 
 function plugin_evidence_device_remove($device_id) {
+	db_execute_prepared('DELETE FROM plugin_evidence_snmp_info WHERE host_id = ?', array($device_id));
 	db_execute_prepared('DELETE FROM plugin_evidence_entity WHERE host_id = ?', array($device_id));
 	db_execute_prepared('DELETE FROM plugin_evidence_mac WHERE host_id = ?', array($device_id));
 	db_execute_prepared('DELETE FROM plugin_evidence_ip WHERE host_id = ?', array($device_id));
@@ -175,6 +176,41 @@ function plugin_evidence_find_organization ($h) {
 	}
 }
 
+/* get snmp info data (sysname, sysdescr, ...) */
+
+
+function plugin_evidence_get_snmp_info($h) {
+	global $config;
+
+	$snmp_info = array(
+		'sysdescr'    => '',
+		'syscontact'  => '',
+		'sysname'     => '',
+		'syslocation' => ''
+	);
+
+	$snmp_info['sysdescr'] = cacti_snmp_get($h['hostname'], $h['snmp_community'], '.1.3.6.1.2.1.1.1.0',
+				$h['snmp_version'], $h['snmp_username'], $h['snmp_password'], 
+				$h['snmp_auth_protocol'], $h['snmp_priv_passphrase'], $h['snmp_priv_protocol'],
+				$h['snmp_context'], $h['snmp_port'], $h['snmp_timeout']);
+
+	$snmp_info['syscontact'] = cacti_snmp_get($h['hostname'], $h['snmp_community'], '.1.3.6.1.2.1.1.4.0',
+				$h['snmp_version'], $h['snmp_username'], $h['snmp_password'], 
+				$h['snmp_auth_protocol'], $h['snmp_priv_passphrase'], $h['snmp_priv_protocol'],
+				$h['snmp_context'], $h['snmp_port'], $h['snmp_timeout']);
+
+	$snmp_info['sysname'] = cacti_snmp_get($h['hostname'], $h['snmp_community'], '.1.3.6.1.2.1.1.5.0',
+				$h['snmp_version'], $h['snmp_username'], $h['snmp_password'], 
+				$h['snmp_auth_protocol'], $h['snmp_priv_passphrase'], $h['snmp_priv_protocol'],
+				$h['snmp_context'], $h['snmp_port'], $h['snmp_timeout']);
+
+	$snmp_info['syslocation'] = cacti_snmp_get($h['hostname'], $h['snmp_community'], '.1.3.6.1.2.1.1.6.0',
+				$h['snmp_version'], $h['snmp_username'], $h['snmp_password'], 
+				$h['snmp_auth_protocol'], $h['snmp_priv_passphrase'], $h['snmp_priv_protocol'],
+				$h['snmp_context'], $h['snmp_port'], $h['snmp_timeout']);
+
+	return $snmp_info;
+}
 
 /* get data from entity mib */
 
@@ -307,6 +343,7 @@ function plugin_evidence_get_entity_data($h) {
 
 
 /* try to find if device are using any mac addresses */
+
 function plugin_evidence_get_mac ($h) {
 
 	$return = array();
@@ -613,16 +650,26 @@ function plugin_evidence_normalize_mac ($mac) {
 	}
 }
 
-
-
-
 /*
-	return all (entity, mac, ip, vendor specific and vendor optional) information
+	return all (snmp_info, entity, mac, ip, vendor specific and vendor optional) information
 	scan_date is index
 */
 
 function plugin_evidence_history ($host_id) {
 	$out = array();
+
+	$data = db_fetch_assoc_prepared("SELECT *
+		FROM plugin_evidence_snmp_info
+		WHERE host_id = ?
+		ORDER BY scan_date DESC",
+		array($host_id));
+
+	if (cacti_sizeof($data)) {
+		foreach ($data as $row) {
+			$out['snmp_info'][$row['scan_date']][] = $row;
+			$out['dates'][] = $row['scan_date'];
+		}
+	}
 
 	$data = db_fetch_assoc_prepared("SELECT *
 		FROM plugin_evidence_entity
@@ -695,7 +742,6 @@ function plugin_evidence_history ($host_id) {
 }
 
 
-
 function plugin_evidence_find() {
 	global $config;
 
@@ -705,6 +751,30 @@ function plugin_evidence_find() {
 	}
 
 	$f = trim(get_request_var('find_text'));
+
+	$sql_where = "sysdescr RLIKE '" . $f . "'
+		OR syscontact RLIKE '" . $f . "'
+		OR sysname RLIKE '" . $f . "'
+		OR syslocation RLIKE '" . $f . "' ";
+
+
+	$data = db_fetch_assoc_prepared ('SELECT host_id, COUNT(scan_date) AS `count` FROM plugin_evidence_snmp_info
+		WHERE ' . $sql_where . 'GROUP BY host_id');
+
+	print '<br/><span class="bold">SNMP info:</span><br/>';
+
+	if (cacti_sizeof($data)) {
+
+		foreach ($data as $row) {
+			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
+			print '<a href="' . $config['url_path'] .
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
+				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . $row['count'] . ' records<br/>';
+		}
+	} else {
+		print __('Not found', 'evidence') . '<br/>';
+	}
+
 
 	$sql_where = "descr RLIKE '" . $f . "'
 		OR name RLIKE '" . $f . "'
@@ -794,6 +864,7 @@ function plugin_evidence_actual_data ($host) {
 
 	$out = array();
 
+	$out['snmp_info'] = plugin_evidence_get_snmp_info($host);
 	$out['entity'] = plugin_evidence_get_entity_data($host);
 	$out['mac'] = plugin_evidence_get_mac($host);
 	$out['ip'] = plugin_evidence_get_ip($host);
@@ -907,10 +978,11 @@ function evidence_show_host_data ($host_id, $scan_date) {
 
 	$evidence_records   = read_config_option('evidence_records');
 	$evidence_frequency = read_config_option('evidence_frequency');
-	$data_compare_entity = array();
-	$data_compare_mac    = array();
-	$data_compare_ip     = array();
-	$data_compare_spec   = array();
+	$data_compare_snmp_info = array();
+	$data_compare_entity    = array();
+	$data_compare_mac       = array();
+	$data_compare_ip        = array();
+	$data_compare_spec      = array();
 	$latest = true;
 	$act_date = '';
 
@@ -945,6 +1017,9 @@ function evidence_show_host_data ($host_id, $scan_date) {
 		// prepare actual data
 		$act_date = date('Y-m-d H:i:s');
 
+		if (isset($data['snmp_info'])) {
+			$act_data['snmp_info'][$act_date] = $data['snmp_info'];
+		}
 		if (isset($data['entity'])) {
 			$act_data['entity'][$act_date] = $data['entity'];
 		}
@@ -968,6 +1043,9 @@ function evidence_show_host_data ($host_id, $scan_date) {
 		$data = plugin_evidence_history($host_id);
 
 		if (get_filter_request_var('actual')) {
+			if (isset($data['snmp_info']) && isset($act_data['snmp_info'])) {
+				$data['snmp_info'] += $act_data['snmp_info'];
+			}
 			if (isset($data['entity']) && isset($act_data['entity'])) {
 				$data['entity'] += $act_data['entity'];
 			}
@@ -1005,8 +1083,17 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					continue;
 				}
 
-				if (cacti_sizeof($data_compare_entity) || cacti_sizeof($data_compare_mac) ||
-					cacti_sizeof($data_compare_ip) || cacti_sizeof($data_compare_spec)) {
+				if (cacti_sizeof($data_compare_snmp_info) || cacti_sizeof($data_compare_entity) ||
+					cacti_sizeof($data_compare_mac) || cacti_sizeof($data_compare_ip) ||
+					cacti_sizeof($data_compare_spec)) {
+
+					if (isset($data_compare_snmp_info) && cacti_sizeof($data_compare_snmp_info)) {
+						foreach ($data_compare_snmp_info as &$row) {
+							if (isset($row['scan_date'])) {
+								unset($row['scan_date']);
+							}
+						}
+					}
 
 					if (isset($data_compare_entity) && cacti_sizeof($data_compare_entity)) {
 						foreach ($data_compare_entity as &$row) {
@@ -1023,7 +1110,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 						foreach ($data_compare_mac as &$row) {
 							if (isset($row['scan_date'])) {
 								unset($row['scan_date']);
-								}
+							}
 						}
 					}
 
@@ -1047,6 +1134,10 @@ function evidence_show_host_data ($host_id, $scan_date) {
 								unset($row['host_id']);
 							}
 						}
+					}
+
+					if (isset($data['snmp_info'][$date]) && cacti_sizeof($data['snmp_info'][$date])) {
+						sort($data['snmp_info'][$date]);
 					}
 
 					if (isset($data['entity'][$date]) && cacti_sizeof($data['entity'][$date])) {
@@ -1077,6 +1168,11 @@ function evidence_show_host_data ($host_id, $scan_date) {
 							unset($row['sysobjectid']);
 							unset($row['host_id']);
 						}
+					}
+
+					if (cacti_sizeof($data_compare_snmp_info) > 0 && isset($data['snmp_info'][$date]) && $data_compare_snmp_info != $data['snmp_info'][$date]) {
+						$change = true;
+						$where .= __('SNMP info', 'evidence') . '<i class="fas fa-long-arrow-alt-up"></i>';
 					}
 
 					if (cacti_sizeof($data_compare_entity) > 0 && isset($data['entity'][$date]) && $data_compare_entity != $data['entity'][$date]) {
@@ -1116,6 +1212,36 @@ function evidence_show_host_data ($host_id, $scan_date) {
 				}
 				print '<dd>';
 
+				if (isset($data['snmp_info'][$date])) {
+					$count = 0;
+
+					$data_compare_snmp_info = $data['snmp_info'][$date];
+
+					print '<div class="paragraph_snmp_info">';
+					print '<span class="bold">SNMP info:</span><br/>';
+					print '<table class="cactiTable"><tr><td>';
+
+					foreach($data['snmp_info'][$date] as $key => $value) {
+						if (!is_array($value)) {
+							print $key . ': ' . $value . '<br/>';
+						} else {
+							unset($value['scan_date']);
+							unset($value['host_id']);
+
+							// nested array
+							foreach ($value as $xkey => $xvalue) {
+								
+								print $xkey . ': ' . $xvalue . '<br/>';
+							}
+						}
+					}
+					print '</td></tr></table>';
+					print '<br/><br/>';
+					print '</div>';
+				} else {
+					$data_compare_snmp_info = array();
+				}
+
 				if (isset($data['entity'][$date])) {
 
 					print '<div class="paragraph_entity">';
@@ -1129,7 +1255,6 @@ function evidence_show_host_data ($host_id, $scan_date) {
 						unset($entity['organization_id']);
 						unset($entity['organization_name']);
 
-
 						foreach ($entity as $key => $value) {
 							if ($value != '') {
 								print $key . ': ' . $value . ' | ';
@@ -1142,7 +1267,6 @@ function evidence_show_host_data ($host_id, $scan_date) {
 				} else {
 					$data_compare_entity = array();
 				}
-
 
 				if (isset($data['mac'][$date])) {
 					$count = 0;
@@ -1276,7 +1400,18 @@ function evidence_show_host_info ($data) {
 	if (isset($data['org_id'])) {
 		print ' (' . $data['org_id'] . ')';
 	}
-	
+
+	if (isset($data['snmp_info'])) {
+		print '<br/><br/><span class="bold">SNMP info:</span><br/>';
+
+		print '<table class="cactiTable"><tr class="top">';
+
+		foreach ($data['snmp_info'] as $key => $value) {
+			print '<tr><td>' . preg_replace('/[^[:print:]\r\n]/', '', $key) . ':</td><td> ' . preg_replace('/[^[:print:]\r\n]/', '', $value) . '</td></tr>';
+		}
+		print '</table>';
+	}
+
 	if (isset($data['entity'])) {
 		print '<br/><br/><span class="bold">Entity MIB:</span><br/>';
 
@@ -1287,7 +1422,6 @@ function evidence_show_host_info ($data) {
 
 		print '<table class="cactiTable"><tr class="top">';
 
-
 		foreach ($data['entity'] as $row) {
 			print '<td>';
 			foreach ($row as $key => $value) {
@@ -1296,12 +1430,12 @@ function evidence_show_host_info ($data) {
 				}
 			}
 			print '</td>';
-
 		}
 		print '</tr></table>';
 
 		if ($short) {
-			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php">I only show the first 3 items, for the full listing click here</a><br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php">I only show.
+			the first 3 items, for the full listing click here</a><br/>';
 		}
 	}
 
@@ -1389,7 +1523,25 @@ function evidence_show_actual_data ($data) {
 	if (isset($data['org_id'])) {
 		print ' (' . $data['org_id'] . ')';
 	}
-	
+
+	if (isset($data['snmp_info'])) {
+		print '<br/><span class="bold">SNMP info:</span><br/>';
+
+		print '<table class="cactiTable"><tr class="top">';
+
+		foreach ($data['snmp_info'] as $row) {
+			print '<td>';
+			foreach ($row as $key => $value) {
+				if ($value != '') {
+					print preg_replace('/[^[:print:]\r\n]/', '', $key) . ': ' . preg_replace('/[^[:print:]\r\n]/', '', $value) . '<br/>';
+				}
+			}
+			print '</td>';
+
+		}
+		print '</tr></table>';
+	}
+
 	if (isset($data['entity'])) {
 		print '<br/><span class="bold">Entity MIB:</span><br/>';
 
@@ -1480,7 +1632,6 @@ function evidence_show_actual_data ($data) {
 }
 
 
-
 function plugin_evidence_array_to_table ($array, $columns = 1) {
 
 	$output = '';
@@ -1491,8 +1642,6 @@ function plugin_evidence_array_to_table ($array, $columns = 1) {
 			$output .= '<tr>';
 
 		foreach ($array as $item) {
-
-
 			if (is_array($item)) {
 				foreach ($item as $key => $value) {
 					$output .= '<td>' . $key . ' = ' . $value  . '</td>';

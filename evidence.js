@@ -1,3 +1,4 @@
+var show_snmp_info = true;
 var show_entity = true;
 var show_mac = true;
 var show_ip = true;
@@ -54,7 +55,23 @@ $(function() {
 		}
 	});
 
+	// expand/hide latest date
+	$('#ch_expand_latest').off('click').on('click', function() {
+			$('.latest').click();
+	});
+
 	// display/hide paragraphs
+
+	$('#ch_snmp_info').off('click').on('click', function() {
+		if (show_snmp_info) {
+			show_snmp_info = false;
+			$('.paragraph_snmp_info').css('display','none');
+		} else {
+			show_snmp_info = true;
+			$('.paragraph_snmp_info').css('display','block');
+		}
+	});
+
 	$('#ch_entity').off('click').on('click', function() {
 		if (show_entity) {
 			show_entity = false;
@@ -63,11 +80,6 @@ $(function() {
 			show_entity = true;
 			$('.paragraph_entity').css('display','block');
 		}
-	});
-
-	// expand/hide latest date
-	$('#ch_expand_latest').off('click').on('click', function() {
-			$('.latest').click();
 	});
 
 	$('#ch_mac').off('click').on('click', function() {

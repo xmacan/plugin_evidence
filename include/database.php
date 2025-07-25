@@ -1,7 +1,7 @@
 <?php
 /*
  +-------------------------------------------------------------------------+
- | Copyright (C) 2021-2024 Petr Macek                                      |
+ | Copyright (C) 2021-2024 The Cacti Group                                 |
  |                                                                         |
  | This program is free software; you can redistribute it and/or           |
  | modify it under the terms of the GNU General Public License             |
@@ -33,6 +33,17 @@ function plugin_evidence_initialize_database() {
 	$data['type'] = 'InnoDB';
 	$data['comment'] = 'evidence organizations';
 	api_plugin_db_table_create ('evidence', 'plugin_evidence_organization', $data);
+
+	$data = array();
+	$data['columns'][] = array('name' => 'host_id', 'type' => 'int(11)', 'NULL' => false);
+	$data['columns'][] = array('name' => 'sysdescr', 'type' => 'varchar(255)', 'default' => null);
+	$data['columns'][] = array('name' => 'syscontact', 'type' => 'varchar(255)', 'default' => null);
+	$data['columns'][] = array('name' => 'sysname', 'type' => 'varchar(255)', 'default' => null);
+	$data['columns'][] = array('name' => 'syslocation', 'type' => 'varchar(255)', 'default' => null);
+	$data['columns'][] = array('name' => 'scan_date', 'type' => 'timestamp', 'NULL' => false, 'default' => '0000-00-00 00:00:00');
+	$data['type'] = 'InnoDB';
+	$data['comment'] = 'evidence snmp info';
+	api_plugin_db_table_create ('evidence', 'plugin_evidence_snmp_info', $data);
 
 	$data = array();
 	$data['columns'][] = array('name' => 'id', 'type' => 'int(11)', 'NULL' => false,'auto_increment' => true);
@@ -255,6 +266,33 @@ function plugin_evidence_upgrade_database() {
 
 	$current = $info['version'];
 	$oldv    = db_fetch_cell('SELECT version FROM plugin_config WHERE directory = "evidence"');
+
+	if (!cacti_version_compare($oldv, $current, '=')) {
+		if (cacti_version_compare($oldv, '0.3', '<')) {
+
+			$data = array();
+			$data['columns'][] = array('name' => 'host_id', 'type' => 'int(11)', 'NULL' => false);
+			$data['columns'][] = array('name' => 'sysdescr', 'type' => 'varchar(255)', 'default' => null);
+			$data['columns'][] = array('name' => 'syscontact', 'type' => 'varchar(255)', 'default' => null);
+			$data['columns'][] = array('name' => 'sysname', 'type' => 'varchar(255)', 'default' => null);
+			$data['columns'][] = array('name' => 'syslocation', 'type' => 'varchar(255)', 'default' => null);
+			$data['columns'][] = array('name' => 'scan_date', 'type' => 'timestamp', 'NULL' => false, 'default' => '0000-00-00 00:00:00');
+			$data['type'] = 'InnoDB';
+			$data['comment'] = 'evidence snmp info';
+			api_plugin_db_table_create ('evidence', 'plugin_evidence_snmp_info', $data);
+		}
+
+		// Set the new version
+		db_execute_prepared("UPDATE plugin_config
+			SET version = ?, author = ?, webpage = ?
+			WHERE directory = 'evidence'",
+			array(
+				$info['version'],
+				$info['author'],
+				$info['homepage']
+			)
+		);
+	}
 }
 
 
