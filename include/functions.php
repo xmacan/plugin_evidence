@@ -1407,7 +1407,7 @@ function evidence_show_host_info ($data) {
 		print '<table class="cactiTable"><tr class="top">';
 
 		foreach ($data['snmp_info'] as $key => $value) {
-			print '<tr><td>' . $key . ':</td><td> ' . $value . '</td></tr>';
+			print '<tr><td>' . preg_replace('/[^[:print:]\r\n]/', '', $key) . ':</td><td> ' . preg_replace('/[^[:print:]\r\n]/', '', $value) . '</td></tr>';
 		}
 		print '</table>';
 	}
@@ -1533,7 +1533,7 @@ function evidence_show_actual_data ($data) {
 			print '<td>';
 			foreach ($row as $key => $value) {
 				if ($value != '') {
-					print $key . ': ' . $value . '<br/>';
+					print preg_replace('/[^[:print:]\r\n]/', '', $key) . ': ' . preg_replace('/[^[:print:]\r\n]/', '', $value) . '<br/>';
 				}
 			}
 			print '</td>';
