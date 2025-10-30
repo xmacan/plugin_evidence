@@ -16,7 +16,10 @@ $entities = array(
 );
 
 $datatypes = array(
-	'mac' => __('Mac addresses', 'evidence'),
-	'vendor_specific' => __('Vendor specific data', 'evidence'),
-	'vendor_optional' => __('Vendor optional data', 'evidence')
+	'info'   => __('SNMP info', 'evidence'),
+	'entity' => __('Entity MIB', 'evidence'),
+	'mac'    => __('Mac addresses', 'evidence'),
+	'ip'     => __('IP addresses', 'evidence'),
+	'spec'   => __('Vendor specific data', 'evidence'),
+	'opt'    => __('Vendor optional data', 'evidence')
 );

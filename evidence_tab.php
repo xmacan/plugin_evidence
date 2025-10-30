@@ -41,6 +41,10 @@ switch (get_request_var('action')) {
 
 		break;
 
+	case 'setting':
+		evidence_save_settings();
+		break;
+
 	case 'find':
 		general_header();
 		evidence_display_form();
@@ -59,7 +63,7 @@ switch (get_request_var('action')) {
 }
 
 function evidence_display_form() {
-	global $config, $entities;
+	global $config, $entities, $datatypes;
 
 	$evidence_records   = read_config_option('evidence_records');
 	$evidence_frequency = read_config_option('evidence_frequency');
@@ -71,9 +75,9 @@ function evidence_display_form() {
 	$host_id = get_filter_request_var('host_id');
 	$template_id = get_filter_request_var('template_id');
 	$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)));
-	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/[^[:print:]\r\n]/', 'default' => '')));
+	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . get_nfilter_request_var('find_text'))));
 
-	print '<form name="form_evidence" action="evidence_tab.php">';
+	form_start(htmlspecialchars(basename($_SERVER['PHP_SELF'])), 'form_evidence');
 
 	html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
 
@@ -145,24 +149,30 @@ function evidence_display_form() {
 	print 'Search';
 	print '</td>';
 	print '<td>';
-
-	print '<input type="text" name="find_text" id="find" value="' . $find_text . '">';
+	print '<input type="text" name="find_text" id="find_text" value="' . $find_text . '">';
 	print '</td>';
 	print '<td>';
 	print 'You can search serial number, firmware version, ip, mac address,...';
 	print '</td>';
-
 	print '</tr>';
 	print '</table>';
 
-	print '</form>';
+	print "<table class='filterTable'>";
+	print '<tr>';
+	print '<td>';
+	evidence_show_checkboxes();
+	print '</td>';
+	print '</tr>';
+	print '</table>';
+
+	form_end(false);
 
 	html_end_box();
 }
 
 
 function evidence_find() {
-	global $entities, $datatypes;
+	global $entities;
 
 	$templates = db_fetch_assoc('SELECT id, name FROM host_template');
 
@@ -170,7 +180,7 @@ function evidence_find() {
 		$host_id = get_filter_request_var('host_id');
 	}
 
-	$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', 'default' => null)));
+	$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', 'default' => -1)));
 
 	if (in_array(get_filter_request_var('template_id'), array_column($templates, 'id'))) {
 		$template_id = get_filter_request_var('template_id');
@@ -187,7 +197,6 @@ function evidence_find() {
 	}
 
 	if (isset($host_id)) {
-		evidence_show_checkboxes();
 		evidence_show_host_data($host_id, $scan_date);
 	} else if (isset($template_id)) {
 		$hosts = db_fetch_assoc_prepared('SELECT id FROM host
@@ -275,34 +284,27 @@ function evidence_stats() {
 }
 
 function evidence_show_checkboxes() {
+	global $datatypes;
+
 	print "<table class='filterTable'>";
+
 	print '<tr>';
+	print '<td>' . __('Show or hide', 'evidence') . ':</td>';
+
+	foreach ($datatypes as $key => $value) {
+		print '<td>';
+		print '<input type="checkbox" id="ch_' . $key . '" name="ch_' . $key . '" value="1" ' . (read_user_setting('evidence_display_' . $key, true) ? ' checked="checked" ' : '') . '>';
+		print '<label for="ch_' . $key . '">' . $value . '</label>';
+		print '</td>';
+	}
+
+	print '<td>';
+	print '</td>';
 	print '<td>';
 	print '<input type="checkbox" id="ch_expand" name="ch_expand" value="1"><label for="ch_expand" class="bold">Expand all dates</label>';
 	print '<input type="checkbox" id="ch_expand_latest" name="ch_expand_latest" value="1"><label for="ch_expand_latest" class="bold">Expand latest date</label>';
 	print '</td>';
-	print '<td>';
-	print '</td>';
 
-	print '<td>' . __('Show or hide', 'evidence') . ':</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_snmp_info" name="ch_snmp_info" value="1" checked="checked"><label for="ch_entity">SNMP info</label>';
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_entity" name="ch_entity" value="1" checked="checked"><label for="ch_entity">Entity MIB</label>';
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_mac" name="ch_mac" value="1" checked="checked"><label for="ch_mac">MAC address</label>';
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_ip" name="ch_ip" value="1" checked="checked"><label for="ch_ip">IP address</label>';
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_specific" name="ch_vendor" value="1" checked="checked"><label for="ch_specific">Vendor spec.</label>';
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="ch_optional" name="ch_optional" value="1" checked="checked"><label for="ch_optional">Vendor opt.</label>';
-	print '</td>';
 	print '</tr>';
 	print '</table>';
 }
@@ -344,4 +346,57 @@ function evidence_treemap($title, $data) {
 
 	echo "});";
 	echo "</script>";
+}
+
+
+function evidence_save_settings() {
+	switch (get_nfilter_request_var('what')) {
+		case 'info':
+			if (read_user_setting('evidence_display_info', true)) {
+				set_user_setting('evidence_display_info', '');
+			} else {
+				set_user_setting('evidence_display_info', 'on');
+			}
+			break;
+
+		case 'entity':
+			if (read_user_setting('evidence_display_entity', true)) {
+				set_user_setting('evidence_display_entity', '');
+			} else {
+				set_user_setting('evidence_display_entity', 'on');
+			}
+			break;
+
+		case 'mac':
+			if (read_user_setting('evidence_display_mac', true)) {
+				set_user_setting('evidence_display_mac', '');
+			} else {
+				set_user_setting('evidence_display_mac', 'on');
+			}
+			break;
+
+		case 'ip':
+			if (read_user_setting('evidence_display_ip', true)) {
+				set_user_setting('evidence_display_ip', '');
+			} else {
+				set_user_setting('evidence_display_ip', 'on');
+			}
+			break;
+
+		case 'spec':
+			if (read_user_setting('evidence_display_spec', true)) {
+				set_user_setting('evidence_display_spec', '');
+			} else {
+				set_user_setting('evidence_display_spec', 'on');
+			}
+			break;
+
+		case 'opt':
+			if (read_user_setting('evidence_display_opt', true)) {
+				set_user_setting('evidence_display_opt', '');
+			} else {
+				set_user_setting('evidence_display_opt', 'on');
+			}
+			break;
+	}
 }

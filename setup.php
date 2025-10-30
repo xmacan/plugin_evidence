@@ -40,30 +40,7 @@ function plugin_evidence_install () {
 
 
 function plugin_evidence_uninstall () {
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_specific_query'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_specific_query`");
-	}
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_organization'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_organization`");
-	}
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_entity'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_entity`");
-	}
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_mac'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_mac`");
-	}
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_vendor_specific'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_vendor_specific`");
-	}
-
-	if (cacti_sizeof(db_fetch_assoc("SHOW TABLES LIKE 'plugin_evidence_snmp_info'")) > 0 ) {
-		db_execute("DROP TABLE `plugin_evidence_snmp_info`");
-	}
+	return true;
 }
 
 
@@ -90,4 +67,20 @@ function plugin_evidence_setup_database() {
 
 	include_once($config['base_path'] . '/plugins/evidence/include/database.php');
 	plugin_evidence_initialize_database();
+}
+
+
+function plugin_evidence_has_data() {
+	return true;
+}
+
+function plugin_evidence_remove_data() {
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_specific_query`");
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_organization`");
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_entity`");
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_mac`");
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_vendor_specific`");
+	db_execute("DROP TABLE IF EXISTS `plugin_evidence_snmp_info`");
+
+	return true;
 }
