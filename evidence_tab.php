@@ -77,7 +77,7 @@ function evidence_display_form() {
 	$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)));
 	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . get_nfilter_request_var('find_text'))));
 
-	form_start(htmlspecialchars(basename($_SERVER['PHP_SELF'])), 'form_evidence');
+	form_start(htmlescape(basename($_SERVER['PHP_SELF'])), 'form_evidence');
 
 	html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
 
