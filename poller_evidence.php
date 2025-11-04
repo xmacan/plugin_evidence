@@ -244,7 +244,7 @@ if (cacti_sizeof($hosts) > 0) {
 
 			$data_snmp_info_his = db_fetch_assoc_prepared ('SELECT sysdescr, syscontact, sysname, syslocation
 				FROM plugin_evidence_snmp_info
-				WHERE host_id = ? AND scan_date = ?',
+				WHERE host_id = ? AND scan_date = ? LIMIT 1',
 				array($host['id'], $old_scan_date));
 		}
 

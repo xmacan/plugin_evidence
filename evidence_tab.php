@@ -77,7 +77,7 @@ function evidence_display_form() {
 	$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)));
 	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . get_nfilter_request_var('find_text'))));
 
-	form_start(htmlescape(basename($_SERVER['PHP_SELF'])), 'form_evidence');
+	form_start(html_escape(basename($_SERVER['PHP_SELF'])), 'form_evidence');
 
 	html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
 
@@ -204,8 +204,6 @@ function evidence_find() {
 			array($template_id));
 
 		if (cacti_sizeof($hosts) > 0) {
-			evidence_show_checkboxes();
-
 			foreach ($hosts as $host) {
 				evidence_show_host_data($host['id'], $scan_date);
 			}
@@ -216,9 +214,24 @@ function evidence_find() {
 		plugin_evidence_find();
 	}
 
-	if (!isset($host_id) && !isset($template_id)) {
+	if (!isset($host_id) && !isset($template_id) && $scan_date != -1) {
+		$ids_info   = array_column(db_fetch_assoc_prepared('SELECT distinct(host_id) FROM plugin_evidence_snmp_info WHERE scan_date = ?', array($scan_date)), 'host_id');
+		$ids_entity = array_column(db_fetch_assoc_prepared('SELECT distinct(host_id) FROM plugin_evidence_entity WHERE scan_date = ?', array($scan_date)), 'host_id');
+		$ids_ip     = array_column(db_fetch_assoc_prepared('SELECT distinct(host_id) FROM plugin_evidence_ip WHERE scan_date = ?', array($scan_date)), 'host_id');
+		$ids_mac    = array_column(db_fetch_assoc_prepared('SELECT distinct(host_id) FROM plugin_evidence_mac WHERE scan_date = ?', array($scan_date)), 'host_id');
+		$ids_vendor = array_column(db_fetch_assoc_prepared('SELECT distinct(host_id) FROM plugin_evidence_vendor_specific WHERE scan_date = ?', array($scan_date)), 'host_id');
+
+		$merged = array_unique(array_merge($ids_info, $ids_entity, $ids_ip, $ids_mac, $ids_mac));
+
+		foreach ($merged as $item) {
+			evidence_show_host_data($item, $scan_date);
+		}
+	}
+
+	if (!isset($host_id) && !isset($template_id) && $scan_date == -1) {
 		print __('Select any device or template', 'snver');
 	}
+
 }
 
 function evidence_stats() {
