@@ -1,11 +1,14 @@
 # plugin_evidence for Cacti
 
-## Try find serial number, version and important information about devices
+## Evidence plugin can be useful when you need to find serial number, firmware change,
+ or problematic firmware. Plugin can collect information about:
+- Entity MIB - serial numbers, part numbers, version, firmware, ...
+- MAC addresses
+- IP addresses
+- vendor specific information
 
-A lot of vendors support SNMP Entity MIB (HPE, Synology, Cisco, Mikrotik, Fortinet, etc).
-There is information about serial numbers, part numbers, versions, firmware, etc.
-For few vendors I have added vendor specific OIDs (Aruba, Mikrotik, Synology, ..).
-It can be useful when you need to find serial number, firmware change, or problematic firmware.
+The plugin also stores history and can notify you when a change occurs.
+
 
 ## Author
 Petr Macek (petr.macek@kostax.cz)

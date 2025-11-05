@@ -1,9 +1,3 @@
-var show_snmp_info = true;
-var show_entity = true;
-var show_mac = true;
-var show_ip = true;
-var show_specific = true;
-var show_optional = true;
 var show_expand = false;
 var show_expand_latest = false;
 
@@ -62,63 +56,63 @@ $(function() {
 
 	// display/hide paragraphs
 
-	$('#ch_snmp_info').off('click').on('click', function() {
-		if (show_snmp_info) {
-			show_snmp_info = false;
-			$('.paragraph_snmp_info').css('display','none');
+	$('#ch_info').off('click').on('click', function() {
+		if ($('.paragraph_info').css('display') == 'block') {
+			$('.paragraph_info').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=info&state=false', function() {});
 		} else {
-			show_snmp_info = true;
-			$('.paragraph_snmp_info').css('display','block');
+			$('.paragraph_info').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=info&state=true', function() {});
 		}
 	});
 
 	$('#ch_entity').off('click').on('click', function() {
-		if (show_entity) {
-			show_entity = false;
+		if ($('.paragraph_entity').css('display') == 'block') {
 			$('.paragraph_entity').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=entity&state=false', function() {});
 		} else {
-			show_entity = true;
 			$('.paragraph_entity').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=entity&state=true', function() {});
 		}
 	});
 
 	$('#ch_mac').off('click').on('click', function() {
-		if (show_mac) {
-			show_mac = false;
+		if ($('.paragraph_mac').css('display') == 'block') {
 			$('.paragraph_mac').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=mac&state=false', function() {});
 		} else {
-			show_mac = true;
 			$('.paragraph_mac').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=mac&state=true', function() {});
 		}
 	});
 
 	$('#ch_ip').off('click').on('click', function() {
-		if (show_ip) {
-			show_ip = false;
+		if ($('.paragraph_ip').css('display') == 'block') {
 			$('.paragraph_ip').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=ip&state=false', function() {});
 		} else {
-			show_ip = true;
 			$('.paragraph_ip').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=ip&state=true', function() {});
 		}
 	});
 
-	$('#ch_specific').off('click').on('click', function() {
-		if (show_specific) {
-			show_specific = false;
-			$('.paragraph_specific').css('display','none');
+	$('#ch_spec').off('click').on('click', function() {
+		if ($('.paragraph_spec').css('display') == 'block') {
+			$('.paragraph_spec').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=spec&state=false', function() {});
 		} else {
-			show_specific = true;
-			$('.paragraph_specific').css('display','block');
+			$('.paragraph_spec').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=spec&state=true', function() {});
 		}
 	});
 
-	$('#ch_optional').off('click').on('click', function() {
-		if (show_optional) {
-			show_optional = false;
-			$('.paragraph_optional').css('display','none');
+	$('#ch_opt').off('click').on('click', function() {
+		if ($('.paragraph_opt').css('display') == 'block') {
+			$('.paragraph_opt').css('display','none');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=opt&state=false', function() {});
 		} else {
-			show_optional = true;
-			$('.paragraph_optional').css('display','block');
+			$('.paragraph_opt').css('display','block');
+			$.get(urlPath+'plugins/evidence/evidence_tab.php?action=setting&what=opt&state=true', function() {});
 		}
 	});
 });

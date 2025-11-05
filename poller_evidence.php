@@ -242,10 +242,9 @@ if (cacti_sizeof($hosts) > 0) {
 		if ($old_scan_date) {
 			$old_data = true;
 
-			$data_snmp_info_his = db_fetch_assoc_prepared ('SELECT sysdescr, syscontact, sysname, syslocation 
+			$data_snmp_info_his = db_fetch_assoc_prepared ('SELECT sysdescr, syscontact, sysname, syslocation
 				FROM plugin_evidence_snmp_info
-				WHERE host_id = ? AND
-				scan_date = ?',
+				WHERE host_id = ? AND scan_date = ? LIMIT 1',
 				array($host['id'], $old_scan_date));
 		}
 
@@ -427,13 +426,14 @@ if (cacti_sizeof($hosts) > 0) {
 		}
 
 		if (!$old_data || $diff['snmp_info'] || $diff['entity'] || $diff['mac'] || $diff['ip'] || $diff['spec']) { /* saving new data */
-			/* store data from snmp info */
+
+			/* store data from snmp info - exception with [0] */
 			if (cacti_sizeof($data_snmp_info) > 0) {
 				db_execute_prepared('INSERT INTO plugin_evidence_snmp_info
 					(host_id, sysdescr, syscontact, sysname, syslocation, scan_date)
 					VALUES (?, ?, ?, ?, ?, ?)',
-					array($host['id'], $data_snmp_info['sysdescr'], $data_snmp_info['syscontact'],
-						$data_snmp_info['sysname'], $data_snmp_info['syslocation'], $scan_date));
+					array($host['id'], $data_snmp_info[0]['sysdescr'], $data_snmp_info[0]['syscontact'],
+						$data_snmp_info[0]['sysname'], $data_snmp_info[0]['syslocation'], $scan_date));
 			}
 
 			/* store data from entity mib */
