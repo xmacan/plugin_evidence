@@ -456,7 +456,7 @@ function plugin_evidence_get_ip ($h) {
 				$fin_ip = substr($ip['oid'], 27);
 				$return[] = $fin_ip;
 			} else {
-				cacti_log('Device ' . $h['id'] . ' - cannot parse IP address from ' . $ip['oid'], 'evidence');
+				cacti_log('Device ' . $h['id'] . ' - cannot parse IP address from ' . $ip['oid']);
 			}
 		}
 	}
@@ -650,7 +650,7 @@ function plugin_evidence_normalize_mac ($mac) {
 		}
 		return strtoupper(implode(':', $tmp_mac));
 	} else {
-		cacti_log('Unknown MAC address format "' . $mac . '"', 'evidence');
+		cacti_log('Unknown MAC address format "' . $mac . '"');
 		return ($mac);
 	}
 }
@@ -661,14 +661,29 @@ function plugin_evidence_normalize_mac ($mac) {
 	scan_date is index
 */
 
-function plugin_evidence_history ($host_id) {
+function plugin_evidence_history ($host_id, $scan_date) {
 	$out = array();
 
-	$data = db_fetch_assoc_prepared("SELECT *
+	$sql_order = 'scan_date DESC';
+	$sql_limit = '';
+
+	if ($scan_date == -2) { // only last 
+		$sql_where = 'host_id = ?';
+		$sql_limit = 'LIMIT 1';
+		$sql_param = [$host_id];
+	} elseif ($scan_date == -1) { // all record
+		$sql_where = 'host_id = ?';
+		$sql_param = [$host_id];
+	} else { // specific date
+		$sql_where = 'host_id = ? AND date(scan_date) = ?';
+		$sql_param = [$host_id, $scan_date];
+	}
+
+	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_snmp_info
-		WHERE host_id = ?
-		ORDER BY scan_date DESC",
-		array($host_id));
+		WHERE ' . $sql_where .
+		' ORDER BY ' . $sql_order . ' ' . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -679,11 +694,11 @@ function plugin_evidence_history ($host_id) {
 		}
 	}
 
-	$data = db_fetch_assoc_prepared("SELECT *
+	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_entity
-		WHERE host_id = ?
-		ORDER BY scan_date DESC, 'index'",
-		array($host_id));
+		WHERE ' . $sql_where .
+		' ORDER BY ' . $sql_order . ", 'index' " . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -696,9 +711,9 @@ function plugin_evidence_history ($host_id) {
 
 	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_mac
-		WHERE host_id = ?
-		ORDER BY scan_date DESC',
-		array($host_id));
+		WHERE ' . $sql_where .
+		' ORDER BY ' . $sql_order . ' ' . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -711,9 +726,9 @@ function plugin_evidence_history ($host_id) {
 
 	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_ip
-		WHERE host_id = ?
-		ORDER BY scan_date DESC',
-		array($host_id));
+		WHERE ' . $sql_where .
+		' ORDER BY ' . $sql_order . ' ' . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -726,10 +741,10 @@ function plugin_evidence_history ($host_id) {
 
 	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_vendor_specific
-		WHERE host_id = ? AND
-		mandatory = "yes"
-		ORDER BY scan_date DESC',
-		array($host_id));
+		WHERE ' . $sql_where .
+		' AND mandatory = "yes"' .
+		' ORDER BY ' . $sql_order . ' ' . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -742,10 +757,10 @@ function plugin_evidence_history ($host_id) {
 
 	$data = db_fetch_assoc_prepared('SELECT *
 		FROM plugin_evidence_vendor_specific
-		WHERE host_id = ? AND
-		mandatory = "no"
-		ORDER BY scan_date DESC',
-		array($host_id));
+		WHERE ' . $sql_where .
+		' AND mandatory = "no"' .
+		' ORDER BY ' . $sql_order . ' ' . $sql_limit,
+		$sql_param);
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
@@ -784,11 +799,10 @@ function plugin_evidence_find() {
 
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
-			print '<a href="' . $config['url_path'] .
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a> (' .
-				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
-				print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?action=find&scan_date=' .
+			substr($row['scan_date'],0,10) . '&host_id=' . $row['host_id'] . '">' . $desc .
+			'</a> (' . $row['scan_date'] . ')<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
@@ -814,12 +828,12 @@ function plugin_evidence_find() {
 
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
-			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
-			print '<a href="' . $config['url_path'] .
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
-				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
-				print ' (' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
+			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
+
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?action=find&scan_date=' .
+			substr($row['scan_date'],0,10) . '&host_id=' . $row['host_id'] . '">' . $desc .
+			'</a> (' . $row['scan_date'] . ')<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
@@ -834,11 +848,10 @@ function plugin_evidence_find() {
 
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
-			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
-				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
-			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?action=find&scan_date=' .
+			substr($row['scan_date'],0,10) . '&host_id=' . $row['host_id'] . '">' . $desc .
+			'</a> (' . $row['scan_date'] . ')<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
@@ -851,11 +864,10 @@ function plugin_evidence_find() {
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
-			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
-				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
-			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?action=find&scan_date=' .
+			substr($row['scan_date'],0,10) . '&host_id=' . $row['host_id'] . '">' . $desc .
+			'</a> (' . $row['scan_date'] . ')<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
@@ -873,11 +885,10 @@ function plugin_evidence_find() {
 	if (cacti_sizeof($data)) {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
-			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
-				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
-			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?action=find&scan_date=' .
+			substr($row['scan_date'],0,10) . '&host_id=' . $row['host_id'] . '">' . $desc .
+			'</a> (' . $row['scan_date'] . ')<br/>';
 		}
 	} else {
 		print __('Not found', 'evidence') . '<br/>';
@@ -1067,8 +1078,10 @@ function evidence_show_host_data ($host_id, $scan_date) {
 
 	print '<dl>';
 	if ($evidence_records > 0 || get_filter_request_var('actual')) {
+
 		$data = array();
-		$data = plugin_evidence_history($host_id);
+
+		$data = plugin_evidence_history($host_id, $scan_date);
 
 		if (get_filter_request_var('actual')) {
 
@@ -1107,7 +1120,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 				$where = '';
 
 				// some date selected, skip others
-				if (!get_filter_request_var('actual') && isset($scan_date) && $scan_date != -1 && $scan_date != $date) {
+				if (!get_filter_request_var('actual') && isset($scan_date) && $scan_date != -1 && $scan_date != -2 && $scan_date != substr($date, 0, 10)) {
 					continue;
 				}
 
@@ -1388,7 +1401,7 @@ function evidence_show_host_info ($data, $host_id) {
 
 		if ($short) {
 			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' . $host_id .
-			'&action=find&template_id=-1&scan_date=-1">' .
+			'&action=find&template_id=-1&scan_date=-2">' .
 			__('Show only first 3 items, for the full listing click here', 'evidence') . '</a><br/>';
 		}
 	}
