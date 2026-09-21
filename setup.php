@@ -76,12 +76,12 @@ function plugin_evidence_has_data() {
 }
 
 function plugin_evidence_remove_data() {
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_specific_query`");
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_organization`");
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_entity`");
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_mac`");
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_vendor_specific`");
-	db_execute("DROP TABLE IF EXISTS `plugin_evidence_snmp_info`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_specific_query`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_organization`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_entity`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_mac`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_vendor_specific`");
+	db_execute_prepared("DROP TABLE IF EXISTS `plugin_evidence_snmp_info`");
 
 	return true;
 }
