@@ -29,7 +29,7 @@ function plugin_evidence_install () {
 	api_plugin_register_hook('evidence', 'device_edit_top_links', 'plugin_evidence_device_edit_top_links', 'include/functions.php');
 	api_plugin_register_hook('evidence', 'top_header_tabs', 'evidence_show_tab', 'include/functions.php');
 	api_plugin_register_hook('evidence', 'top_graph_header_tabs', 'evidence_show_tab', 'include/functions.php');
-	api_plugin_register_hook('evidence', 'host_device_remove', 'plugin_evidence_device_remove', 'include/functions.php');
+	api_plugin_register_hook('evidence', 'device_remove', 'plugin_evidence_device_remove', 'include/functions.php');
 	api_plugin_register_hook('evidence', 'config_settings', 'plugin_evidence_config_settings', 'include/settings.php');
 	api_plugin_register_hook('evidence', 'poller_bottom', 'plugin_evidence_poller_bottom', 'include/functions.php');
 	api_plugin_register_hook('evidence', 'host_edit_bottom', 'plugin_evidence_host_edit_bottom', 'include/functions.php');

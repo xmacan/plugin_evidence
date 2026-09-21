@@ -49,6 +49,8 @@ function plugin_evidence_device_remove($device_id) {
 	db_execute_prepared('DELETE FROM plugin_evidence_mac WHERE host_id = ?', array($device_id));
 	db_execute_prepared('DELETE FROM plugin_evidence_ip WHERE host_id = ?', array($device_id));
 	db_execute_prepared('DELETE FROM plugin_evidence_vendor_specific WHERE host_id = ?', array($device_id));
+
+	return $device_id;
 }
 
 
