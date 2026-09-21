@@ -69,7 +69,7 @@ if (is_array($allowed) && in_array($id, $allowed)) {
 	}
 
 	if ($evidence_records > 0 && ($count_entity > 0 || $count_mac > 0 || $count_ip > 0 || $count_vendor > 0)) {
-		print '<br/><br/><a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' .
+		print '<br/><br/><a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?scan_date=-1&host_id=' .
 			$id . '&action=find">' . __('Show older records', 'evidence') . '</a><br/>';
 	} else {
 		print '<br/><br/>' . __('History data store disabled', 'evidence') . '<br/><br/>';
@@ -78,4 +78,4 @@ if (is_array($allowed) && in_array($id, $allowed)) {
 	print __('Permission issue', 'evidence');
 }
 
-	print '<br/>';
+print '<br/>';
