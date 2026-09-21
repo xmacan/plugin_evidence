@@ -39,7 +39,6 @@ function plugin_evidence_poller_bottom() {
 		$extra_args = ' -q ' . $config['base_path'] . '/plugins/evidence/poller_evidence.php --id=all';
 
 		exec_background($command_string, $extra_args);
-	} else {
 	}
 }
 
@@ -116,7 +115,7 @@ function evidence_import_enterprise_numbers() {
 
 		while(!feof($file)) {
 			$line = fgets($file);
-			db_execute($line);
+			db_execute_prepared($line);
 			$i++;
 		}
 	} else {
