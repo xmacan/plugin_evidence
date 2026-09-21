@@ -1,7 +1,8 @@
 <?php
-/*
+/* vim: ts=4
  +-------------------------------------------------------------------------+
- | Copyright (C) 2021-2024 Petr Macek                                      |
+ | Copyright (C) 2004-2026 The Cacti Group, Inc.                           |
+ | Copyright (C) 2004-2024 Petr Macek                                      |
  |                                                                         |
  | This program is free software; you can redistribute it and/or           |
  | modify it under the terms of the GNU General Public License             |
@@ -18,8 +19,8 @@
  | This code is designed, written, and maintained by the Cacti Group. See  |
  | about.php and/or the AUTHORS file for specific developer information.   |
  +-------------------------------------------------------------------------+
- | https://github.com/cacti/                                               |
- | https://www.cacti.net/                                                  |
+ | https://github.com/xmacan/                                              |
+ | http://www.cacti.net/                                                   |
  +-------------------------------------------------------------------------+
 */
 
@@ -61,14 +62,15 @@ function evidence_show_tab () {
 			$cp = true;
 		}
 
-		print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php"><img src="' . $config['url_path'] . 'plugins/evidence/images/tab_evidence' . ($cp ? '_down': '') . '.gif" alt="evidence" align="absmiddle" border="0"></a>';
+		print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php"><img src="' . $config['url_path'] . 'plugins/evidence/images/tab_evidence' . ($cp ? '_down': '') . '.gif" alt="' . __('Evidence', 'evidence') . '" align="absmiddle" border="0"></a>';
 	}
 }
 
 
 function plugin_evidence_device_edit_top_links (){
-	print "<br/><span class='linkMarker'>* </span><a id='evidence_info' data-evidence_id='" . get_filter_request_var('id') . "' href=''>" . __('Evidence') . "</a>";
+	print "<br/><span class='linkMarker'>* </span><a id='evidence_info' data-evidence_id='" . get_filter_request_var('id') . "' href=''>" . __('Evidence', 'evidence') . "</a>";
 }
+
 
 function plugin_evidence_host_edit_bottom () {
 	global $config;
@@ -88,7 +90,7 @@ function plugin_evidence_host_edit_bottom () {
 		if (cacti_sizeof($host)) {
 			$data = plugin_evidence_actual_data($host);
 			html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
-			print "<tr class='tableHeader'><th>Data</th></tr><tr><td>";
+			print "<tr class='tableHeader'><th>" . __('Data', 'evidence') . "</th></tr><tr><td>";
 			evidence_show_host_info ($data, get_filter_request_var('id'));
 			print '</td></tr>';
 			html_end_box(false);
@@ -387,7 +389,7 @@ function plugin_evidence_get_ip ($h) {
 	.1.3.6.1.2.1.4.34.1.3.1.4.10.253.255.254.30 = INTEGER: 30
 	.1.3.6.1.2.1.4.34.1.3.1.4.169.254.1.1.7 = INTEGER: 7
 	need parse IP from OID
-	
+
 	mask is here - value is reference to masktable, but a lot of devices doesn't support OID ....32.1.5
 	so parse mask length from oid (last number)
 	.1.3.6.1.2.1.4.34.1.5.1.4.10.21.160.222.32 = OID: .1.3.6.1.2.1.4.32.1.5.32.1.10.21.160.0.21
@@ -762,7 +764,7 @@ function plugin_evidence_find() {
 	global $config, $datatypes;
 
 	if (read_config_option('evidence_records') == 0) {
-		print 'Store history is not allowed. Nothing to do ...';
+		print __('Store history is not allowed. Nothing to do.', 'evidence');
 		return false;
 	}
 
@@ -783,8 +785,8 @@ function plugin_evidence_find() {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] .
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
-				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . cacti_sizeof($data) . ' records<br/>';
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a> (' .
+				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
 				print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
 		}
@@ -814,8 +816,8 @@ function plugin_evidence_find() {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] .
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
-				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . cacti_sizeof($data) . ' records<br/>';
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
+				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
 				print ' (' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
 		}
@@ -833,8 +835,8 @@ function plugin_evidence_find() {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
-				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . cacti_sizeof($data) . ' records<br/>';
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
+				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
 			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
 		}
@@ -850,8 +852,8 @@ function plugin_evidence_find() {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
-				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . cacti_sizeof($data) . ' records<br/>';
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
+				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
 			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
 		}
@@ -872,8 +874,8 @@ function plugin_evidence_find() {
 		foreach ($data as $row) {
 			$desc = db_fetch_cell_prepared ('SELECT description FROM host WHERE id = ?', array($row['host_id']));
 			print '<a href="' . $config['url_path'] . 
-				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' .
-				$desc . '</a> (ID: ' . $row['host_id'] . '), found in ' . cacti_sizeof($data) . ' records<br/>';
+				'plugins/evidence/evidence_tab.php?action=find&host_id=' . $row['host_id'] . '">' . $desc . '</a>' .
+				__('ID: %d), found in %d records<br/>', $row['host_id'], cacti_sizeof($data), 'evidence');
 
 			print '(' . implode(', ', array_column($data, 'scan_date')) . ')<br/>';
 		}
@@ -1037,7 +1039,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 		}
 
 		if (isset($data['org_id'])) {
-			print ' (ID ORG: ' . $data['org_id'] . ')' . '<br/>';
+			print ' (' . __('ID ORG', 'evidence') . ': ' . $data['org_id'] . ')' . '<br/>';
 		}
 
 		// prepare actual data
@@ -1179,7 +1181,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					$data_compare_snmp_info = $data['snmp_info'][$date];
 
 					print '<div class="paragraph_info" style="display:' . (read_user_setting('evidence_display_info', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">SNMP info:</span><br/>';
+					print '<span class="bold">' . __('SNMP information', 'evidence') . ':</span><br/>';
 					print '<table class="cactiTable"><tr><td>';
 
 					foreach($data['snmp_info'][$date] as $key => $value) {
@@ -1204,7 +1206,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 				if (isset($data['entity'][$date])) {
 
 					print '<div class="paragraph_entity" style="display:' . (read_user_setting('evidence_display_entity', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">Entity MIB:</span><br/>';
+					print '<span class="bold">' . __('Entity MIB', 'evidence') . ':</span><br/>';
 
 					$data_compare_entity = $data['entity'][$date];
 
@@ -1230,7 +1232,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					$data_compare_mac = $data['mac'][$date];
 
 					print '<div class="paragraph_mac" style="display:' . (read_user_setting('evidence_display_mac', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">MAC:</span><br/>';
+					print '<span class="bold">' . __('MAC addresses', 'evidence') . ':</span><br/>';
 					print '<table class="cactiTable"><tr>';
 
 					foreach($data['mac'][$date] as $mac) {
@@ -1254,7 +1256,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					$data_compare_ip = $data['ip'][$date];
 
 					print '<div class="paragraph_ip" style="display:' . (read_user_setting('evidence_display_ip', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">IP:</span><br/>';
+					print '<span class="bold">' . __('IP addresses', 'evidence') . ':</span><br/>';
 					print '<table class="cactiTable"><tr>';
 
 					foreach($data['ip'][$date] as $ip) {
@@ -1276,7 +1278,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 					$data_compare_spec = $data['spec'][$date];
 
 					print '<div class="paragraph_spec" style="display:' . (read_user_setting('evidence_display_spec', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">Vendor specific:</span><br/>';
+					print '<span class="bold">' . __('Vendor specific information', 'evidence') . ':</span><br/>';
 
 					foreach($data['spec'][$date] as $spec) {
 
@@ -1303,7 +1305,7 @@ function evidence_show_host_data ($host_id, $scan_date) {
 				if (isset($data['opt'][$date])) {
 
 					print '<div class="paragraph_opt" style="display:' . (read_user_setting('evidence_display_opt', true) ? 'block' : 'none') . '">';
-					print '<span class="bold">Vendor optional:</span><br/>';
+					print '<span class="bold">' . __('Vendor optional information', 'evidence') . ':</span><br/>';
 
 					foreach($data['opt'][$date] as $opt) {
 
@@ -1385,8 +1387,9 @@ function evidence_show_host_info ($data, $host_id) {
 		print '</tr></table>';
 
 		if ($short) {
-			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' . $host_id . '&action=find&template_id=-1&scan_date=-1">I only show.
-			the first 3 items, for the full listing click here</a><br/>';
+			print '<a href="' . $config['url_path'] . 'plugins/evidence/evidence_tab.php?host_id=' . $host_id .
+			'&action=find&template_id=-1&scan_date=-1">' .
+			__('Show only first 3 items, for the full listing click here', 'evidence') . '</a><br/>';
 		}
 	}
 

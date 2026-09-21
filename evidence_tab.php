@@ -1,7 +1,8 @@
 <?php
-/*
+/* vim: ts=4
  +-------------------------------------------------------------------------+
- | Copyright (C) 2021-2024 Petr Macek                                      |
+ | Copyright (C) 2004-2026 The Cacti Group, Inc.                           |
+ | Copyright (C) 2004-2024 Petr Macek                                      |
  |                                                                         |
  | This program is free software; you can redistribute it and/or           |
  | modify it under the terms of the GNU General Public License             |
@@ -18,8 +19,8 @@
  | This code is designed, written, and maintained by the Cacti Group. See  |
  | about.php and/or the AUTHORS file for specific developer information.   |
  +-------------------------------------------------------------------------+
- | https://github.com/cacti/                                               |
- | https://www.cacti.net/                                                  |
+ | https://github.com/xmacan/                                              |
+ | http://www.cacti.net/                                                   |
  +-------------------------------------------------------------------------+
 */
 
@@ -72,10 +73,10 @@ function evidence_display_form() {
 	$host_id = get_filter_request_var('host_id');
 	$template_id = get_filter_request_var('template_id');
 	$scan_date = get_filter_request_var('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', 'default' => -1)));
-	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . get_nfilter_request_var('find_text'))));
+	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . html_escape('find_text'))));
 	form_start(html_escape(basename($_SERVER['PHP_SELF'])), 'form_evidence');
 
-	html_start_box('<strong>Evidence</strong>', '100%', '', '3', 'center', '');
+	html_start_box('<strong>' . __('Evidence', 'evidence') . '</strong>', '100%', '', '3', 'center', '');
 
 	print "<tr class='even noprint'>";
 	print "<td>";
@@ -86,12 +87,12 @@ function evidence_display_form() {
 	print html_host_filter($host_id, 'applyFilter', $host_where, false, true);
 
 	print "<td>";
-	print __('Template');
+	print __('Template', 'evidence');
 	print "</td>";
 	print "<td>";
 
 	print "<select id='template_id' name='template_id'>";
-	print "<option value='-1'" . (get_filter_request_var('template_id') == '-1' ? ' selected' : '') . '>' . __('Any') . '</option>';
+	print "<option value='-1'" . (get_filter_request_var('template_id') == '-1' ? ' selected' : '') . '>' . __('Any', 'evidence') . '</option>';
 
 	$templates = db_fetch_assoc('SELECT id, name FROM host_template');
 
@@ -142,13 +143,13 @@ function evidence_display_form() {
 	print "<table class='filterTable'>";
 	print '<tr>';
 	print '<td>';
-	print 'Search';
+	print __('Search', 'evidence');
 	print '</td>';
 	print '<td>';
-	print '<input type="text" name="find_text" id="find_text" value="' . $find_text . '">';
+	print '<input type="text" name="find_text" id="find_text" value="' . html_escape($find_text) . '">';
 	print '</td>';
 	print '<td>';
-	print 'You can search serial number, firmware version, ip, mac address,...';
+	print __('You can search serial number, firmware version, ip, mac address,...', 'evidence');
 	print '</td>';
 	print '</tr>';
 	print '</table>';
@@ -225,7 +226,7 @@ function evidence_find() {
 	}
 
 	if (!isset($host_id) && !isset($template_id) && $scan_date == -1) {
-		print __('Select any device or template', 'snver');
+		print __('Select any device or template', 'evidence');
 	}
 
 }
@@ -237,13 +238,13 @@ function evidence_stats() {
 	$evidence_frequency = read_config_option('evidence_frequency');
 
 	if ($evidence_frequency == 0 || $evidence_records == 0) {
-		print __('No data. Allow periodic scan and store history in settings');
+		print __('No data. Allow periodic scan and store history in settings', 'evidence');
 	}
 
 	print '<br/><br/>';
-	print __('You can display all information about specific host, all devices with the same template.') . '<br/>';
-	print __('You can search any string in all data.') . '<br/>';
-	print __('Note when using Scan Date - Only the data that changed at the moment of Scan_date is displayed. Data not changed at that time is not displayed.') . '<br/>';
+	print __('You can display all information about specific host, all devices with the same template.', 'evidence') . '<br/>';
+	print __('You can search any string in all data.', 'evidence') . '<br/>';
+	print __('Note when using Scan Date - Only the data that changed at the moment of Scan_date is displayed. Data not changed at that time is not displayed.', 'evidence') . '<br/>';
 
 	$dev = db_fetch_cell ('SELECT SUM(total) from ( SELECT COUNT(DISTINCT(host_id)) AS total FROM plugin_evidence_entity 
 		UNION SELECT COUNT(DISTINCT(host_id)) AS total FROM plugin_evidence_mac
@@ -257,20 +258,19 @@ function evidence_stats() {
 	$old = db_fetch_cell ('SELECT MIN(scan_date) FROM plugin_evidence_entity');
 
 	print '<br/><br/>';
-	print '<strong>' . __('Number of records') . ':</strong><br/>';
-	print 'Devices: ' . $dev . ' records<br/>';
-	print 'Entity MIB: ' . $ent . ', records, ' . $vnd . ' vendors<br/>';
-	print 'Unique MAC addresses: ' . $mac . '<br/>';
-	print 'Unique IP addresses: ' . $ip . '<br/>';
-	print 'Vendor specific data: ' . $ven . '<br/>';
-	print 'Oldest record: ' . $old . '<br/>';
+	print '<strong>' . __('Number of records', 'evidence') . ':</strong><br/>';
+	print __('Devices: %d records', $dev, 'evidence') . '<br/>';
+	print __('Entity MIB: %d records, %d vendors', $ent, $vnd, 'evidence') . '<br/>';
+	print __('Unique MAC addresses: %d', $mac, 'evidence') . '<br/>';
+	print __('Unique IP addresses: %d', $ip, 'evidence') . '<br/>';
+	print __('Vendor specific data: %d', $ven, 'evidence') . '<br/>';
+	print __('Oldest record: %d', $old, 'evidence') . '<br/>';
 	print '<br/><br/>';
 
 	$treemap = array(
 		'label' => array(),
 		'data'  => array(),
 	);
-
 
 	$vendors = db_fetch_assoc('SELECT count(distinct(host_id)) AS `count`, organization
 		FROM plugin_evidence_entity AS pee
@@ -287,7 +287,7 @@ function evidence_stats() {
 			array_push($treemap['data'], $vendor['count']);
 		}
 		
-		print '<strong>Vendors:</strong><br />';
+		print '<strong>' . __('Vendors', 'evidence') . ':</strong><br />';
 		evidence_treemap('Vendors', $treemap);
 	}
 }
@@ -310,10 +310,11 @@ function evidence_show_checkboxes() {
 	print '<td>';
 	print '</td>';
 	print '<td>';
-	print '<input type="checkbox" id="ch_expand" name="ch_expand" value="1"><label for="ch_expand" class="bold">Expand all dates</label>';
-	print '<input type="checkbox" id="ch_expand_latest" name="ch_expand_latest" value="1"><label for="ch_expand_latest" class="bold">Expand latest date</label>';
+	print '<input type="checkbox" id="ch_expand" name="ch_expand" value="1">';
+	print '<label for="ch_expand" class="bold">' . __('Expand all dates', 'evidence') . '</label>';
+	print '<input type="checkbox" id="ch_expand_latest" name="ch_expand_latest" value="1">';
+	print '<label for="ch_expand_latest" class="bold">' . __('Expand latest date', 'evidence') . '</label>';
 	print '</td>';
-
 	print '</tr>';
 	print '</table>';
 }

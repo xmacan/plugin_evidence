@@ -1,7 +1,8 @@
 <?php
-/*
+/* vim: ts=4
  +-------------------------------------------------------------------------+
- | Copyright (C) 2021-2024 The Cacti Group                                 |
+ | Copyright (C) 2004-2026 The Cacti Group, Inc.                           |
+ | Copyright (C) 2004-2024 Petr Macek                                      |
  |                                                                         |
  | This program is free software; you can redistribute it and/or           |
  | modify it under the terms of the GNU General Public License             |
@@ -22,7 +23,6 @@
  | http://www.cacti.net/                                                   |
  +-------------------------------------------------------------------------+
 */
-
 
 function plugin_evidence_initialize_database() {
 
@@ -294,6 +294,4 @@ function plugin_evidence_upgrade_database() {
 		);
 	}
 }
-
-
 
