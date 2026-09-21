@@ -34,7 +34,7 @@ set_default_action();
 
 $selectedTheme = get_selected_theme();
 
-switch (get_request_var('action')) {
+switch (html_escape_request_var('action')) {
 	case 'ajax_hosts':
 		$sql_where = '';
 		get_allowed_ajax_hosts(true, 'applyFilter', $sql_where);
@@ -51,7 +51,7 @@ switch (get_request_var('action')) {
 		bottom_footer();
 		break;
 
-        default:
+	default:
 		general_header();
 		evidence_display_form();
 		evidence_stats();
@@ -77,7 +77,6 @@ function evidence_display_form() {
 		$scan_date = get_nfilter_request_var('scan_date');
 	} else {
 		$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', 'default' => -1)));
-//		$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', 'default' => -1)));
 	}
 
 	$find_text = get_filter_request_var('find_text', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^([a-zA-Z0-9_\-\.:\+ ]+)$/', 'default' => 'INCORRECT: ' . html_escape('find_text'))));
@@ -202,7 +201,6 @@ function evidence_find() {
 		$scan_date = get_nfilter_request_var('scan_date');
 	} else {
 		$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', 'default' => -1)));
-//		$scan_date = get_filter_request_var ('scan_date', FILTER_VALIDATE_REGEXP, array('options' => array('regexp' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', 'default' => -1)));
 	}
 
 	if (in_array(get_filter_request_var('template_id'), array_column($templates, 'id'))) {
