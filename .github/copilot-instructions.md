@@ -384,9 +384,45 @@ Follow the established pattern from git history:
 - Reference issue numbers when applicable
 - Group related changes logically
 
+## CI & Dependency Baselines
+
+- Do not commit a `composer.json` or `composer.lock` in this plugin's own repo root — the shared CI workflow installs Pest/dev dependencies into Cacti's own Composer-managed vendor tree (checked out alongside the plugin). Use Cacti's `composer.json`, not a plugin-local one.
+- Do not add a plugin-local `.phpstan.neon`/`phpstan.neon` or `.php-cs-fixer.php`/`.php-cs-fixer.dist.php` — lint/static-analysis steps run against Cacti's own config from the Cacti core checkout, targeting this plugin's directory. Use the Cacti version, not a plugin-local config.
+- Prefer Cacti's `cacti_count()`/`cacti_sizeof()` wrappers over the raw `count()`/`sizeof()` builtins in new or edited code.
+
+## Internationalization (i18n)
+
+- Translatable strings are managed with GNU gettext via `locales/build_gettext.sh`. `locales/po/cacti.pot` is the source template; Weblate owns syncing the per-language `.po`/`.mo` files from it.
+- When a pull request adds or changes a string wrapped in `__()`/`__n()`/`__esc()`/`__x()`/`__xn()`/`__gettext()`, run `locales/build_gettext.sh` before pushing and add the resulting change to `locales/po/cacti.pot` only. Do not commit the regenerated per-language `.po`/`.mo` files in the same PR — Weblate takes care of the rest.
+
 ## References
 
 - Cacti Plugin Development Guide
 - Cacti API Documentation
 - Project README.md for feature descriptions
 - CHANGELOG.md for version history
+
+## Security & Quality Conventions
+
+These conventions apply across the Cacti plugin fleet and should be followed whenever touching
+existing code or adding new code, not just in dedicated cleanup passes:
+
+- **No hardcoded third-party hosts.** Never hardcode a third-party IP address, hostname, or URL
+  in plugin code (even for tooling/download helpers). Expose it as a plugin setting instead, with
+  secure-by-default values (e.g. an SSL-verification setting that defaults to verify-on).
+- **Prepared statements over `db_qstr()`.** Build dynamic `WHERE` clauses using the
+  `$sql_where`/`$sql_params` prepared-statement pattern, not string concatenation via `db_qstr()`.
+- **Use `html_escape_request_var()`.** Prefer it over the `html_escape(get_request_var(...))` call
+  chain.
+- **Harden `unserialize()`.** Always pass `['allow_classes' => false]` as the second argument.
+- **i18n text domain.** Every `__()`/`__esc()` call must include this plugin's text domain as the
+  final argument, except when deliberately comparing against a literal, untranslated Cacti-core
+  label.
+- **Plugin table-creation API.** Use `api_plugin_db_table_create()`/`api_plugin_db_add_column()`
+  (from Cacti core's `lib/plugins.php`) instead of raw `CREATE TABLE`/`ALTER TABLE ... ADD COLUMN`.
+  Both are idempotent (safe no-ops when already applied), so the same call can run unconditionally
+  from both the install AND upgrade paths.
+- **PHPDoc shape.** Every function gets a PHPDoc block: a one-line description, a blank comment
+  line, `@param` lines, a blank comment line, then `@return`. Infer parameter/return types from
+  actual usage; don't change the function's real type-hints in the same pass (let static analysis
+  flag mismatches separately). Skip vendored third-party library files.
